@@ -1,0 +1,11 @@
+<# File: 001_hello.leviathan
+ # The classical "hello, world" program.
+ # (C) 2020 Ariel Ortiz, ITESM CEM.
+ #>
+
+main() {
+    var x = "useless var";
+    var z = 5;
+    var a = 'c';
+    prints("hello, world\n");
+}
