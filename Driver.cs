@@ -29,6 +29,9 @@ using System.Text;
 namespace Leviathan {
     public class Driver {
         const string VERSION = "0.01";
+        static readonly string[] ReleaseIncludes = {
+            "Lexical analysis"
+        };
 
          void PrintAppHeader() {
              Console.WriteLine("Leviathan compiler, version " + VERSION);

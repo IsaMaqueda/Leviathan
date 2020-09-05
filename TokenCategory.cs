@@ -20,6 +20,24 @@
 */
 namespace Leviathan {
     enum TokenCategory {
+        // plain identifier
+        IDENTIFIER,
+        // non keywords
+        AND,
+        ASSIGN, 
+        INT_LITERAL,
+        STRING_LITERAL,
+        CHAR_LITERAL,
+        LESS,
+        MUL,
+        NEG,
+        PARENTHESIS_OPEN,
+        PARENTHESIS_CLOSE,
+        BRACE_OPEN,
+        BRACE_CLOSE,
+        PLUS,
+        // keywords 
+        BOOL_LITERAL,
         BREAK,
         DO,
         ELIF,
@@ -29,6 +47,9 @@ namespace Leviathan {
         RETURN,
         TRUE,
         VAR,
-        WHILE
+        WHILE, 
+        // OTHER
+        ILLEGAL_CHAR, 
+        EOF
     }
 }

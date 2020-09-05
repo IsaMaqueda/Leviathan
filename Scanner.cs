@@ -28,30 +28,26 @@ namespace Leviathan {
         
         readonly string input;
 
+        // The most specific first, general later
         static readonly Regex regex = new Regex(
             @"
-                (?<And>        [&][&]       )
-              | (?<Assign>     [=]       )
-              | (?<Comment>    [#].*     ) #este solo agarra comentario de una linea
-              | (?<id>         [0-9a-zA-Z_]+     )
-              | (?<lit-int> \d+       )
-              | (?<lit-bool>   0|1|true|false)
+                (?<And>        &&                )
+              | (?<Assign>     [=]               )
+              | (?<Comment>    [#].*             )
+              | (?<CharLiteral> '[^'\n]'         )
+              | (?<IntLiteral> -?\d+             )
+              | (?<Identifier> [0-9a-zA-Z_]+     )
+              | (?<StringLiteral> ""[^""\n]*""  )
               | (?<Less>       [<]       )
               | (?<Mul>        [*]       )
               | (?<Neg>        [-]       )
+              | (?<Plus>       [+]       )
               | (?<Newline>    \n        )
-              | (?<Carriage_Return>    \r)
-              | (?<Tab>        \t)
-              | (?<Backslash>  [\][\]    )
-              | (?<Single_Quote>  [\'])
-              | (?<Double_Quote>  [\"])
-              | (?<Unicode_Char>  [∖uhhhhhh])
-              | (?<lit-char> '.')
-              | (?<lit-str>  "[^'"]+" )
               | (?<ParLeft>    [(]       )
               | (?<ParRight>   [)]       )
-              | (?<Plus>       [+]       )
-              | (?<WhiteSpace> \s        )     # Must go anywhere after Newline.
+              | (?<BraceLeft>   [{]      )
+              | (?<BraceRight>   [}]     )
+              | (?<WhiteSpace> \s        )
               | (?<Other>      .         )     # Must be last: match any other character.
             ",
             RegexOptions.IgnorePatternWhitespace
@@ -66,13 +62,35 @@ namespace Leviathan {
                 {"do", TokenCategory.DO},
                 {"return", TokenCategory.RETURN},
                 {"elif", TokenCategory.ELIF},
-                {"true", TokenCategory.TRUE},
+                //{"boolLiteral", TokenCategory.BOOL_LITERAL},
                 {"else", TokenCategory.ELSE},
                 {"var", TokenCategory.VAR},
-                {"false", TokenCategory.FALSE},
+                //{"false", TokenCategory.LIT_BOOL},
                 {"while", TokenCategory.WHILE}
             };
 
+            static readonly IDictionary<string, TokenCategory> nonKeywords =
+            new Dictionary<string, TokenCategory>() {
+                {"And", TokenCategory.AND},
+                {"Assign", TokenCategory.ASSIGN},
+                //{"False", TokenCategory.FALSE},
+                {"CharLiteral", TokenCategory.CHAR_LITERAL},
+                {"IntLiteral", TokenCategory.INT_LITERAL},
+                {"StringLiteral", TokenCategory.STRING_LITERAL},
+                {"Less", TokenCategory.LESS},
+                {"Mul", TokenCategory.MUL},
+                {"Neg", TokenCategory.NEG},
+                {"ParLeft", TokenCategory.PARENTHESIS_OPEN},
+                {"ParRight", TokenCategory.PARENTHESIS_CLOSE},
+                {"BraceLeft", TokenCategory.BRACE_OPEN},
+                {"BraceRight", TokenCategory.BRACE_CLOSE},
+                {"Plus", TokenCategory.PLUS},
+                //{"True", TokenCategory.TRUE}
+            };
+
+         public Scanner(string input) {
+            this.input = input;
+        }
 
         public IEnumerable<Token> Start() {
 
@@ -83,7 +101,7 @@ namespace Leviathan {
                 new Token(m.Value, tc, row, m.Index - columnStart + 1);
 
             foreach (Match m in regex.Matches(input)) {
-
+                Console.WriteLine(m.Value);
                 if (m.Groups["Newline"].Success) {
 
                     // Found a new line.
@@ -98,7 +116,7 @@ namespace Leviathan {
                 } else if (m.Groups["Identifier"].Success) {
 
                     if (keywords.ContainsKey(m.Value)) {
-
+                        Console.WriteLine(m.Value + " is a keyword");
                         // Matched string is a Buttercup keyword.
                         yield return newTok(m, keywords[m.Value]);
 
@@ -114,7 +132,7 @@ namespace Leviathan {
                     yield return newTok(m, TokenCategory.ILLEGAL_CHAR);
 
                 } else {
-
+                    Console.WriteLine(m.Value + " is a nonKeyword");
                     // Match must be one of the non keywords.
                     foreach (var name in nonKeywords.Keys) {
                         if (m.Groups[name].Success) {
