@@ -1,0 +1,8 @@
+<# File: 001_hello.leviathan
+ # The classical "hello, world" program.
+ # (C) 2020 Ariel Ortiz, ITESM CEM.
+ #>
+
+main() {
+    prints("hello, world\n");
+}
