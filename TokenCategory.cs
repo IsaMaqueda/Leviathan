@@ -36,6 +36,7 @@ namespace Leviathan {
         BRACE_OPEN,
         BRACE_CLOSE,
         PLUS,
+        SEMI_COLON,
         // keywords 
         BOOL_LITERAL,
         BREAK,

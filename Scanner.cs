@@ -33,11 +33,13 @@ namespace Leviathan {
             @"
                 (?<And>        &&                )
               | (?<Assign>     [=]               )
-              | (?<Comment>    [#].*             )
+              | (?<Comment>    [#]+.*            )
+              | (?<BlockComment>    [<][#]+[^<]*[#][>])
               | (?<CharLiteral> '[^'\n]'         )
               | (?<IntLiteral> -?\d+             )
               | (?<Identifier> [0-9a-zA-Z_]+     )
-              | (?<StringLiteral> ""[^""\n]*""  )
+              | (?<StringLiteral> ""[^""\n]*""   )
+              | (?<SemiColon>       [;]          )
               | (?<Less>       [<]       )
               | (?<Mul>        [*]       )
               | (?<Neg>        [-]       )
@@ -85,6 +87,7 @@ namespace Leviathan {
                 {"BraceLeft", TokenCategory.BRACE_OPEN},
                 {"BraceRight", TokenCategory.BRACE_CLOSE},
                 {"Plus", TokenCategory.PLUS},
+                {"SemiColon", TokenCategory.SEMI_COLON}
                 //{"True", TokenCategory.TRUE}
             };
 
@@ -101,7 +104,7 @@ namespace Leviathan {
                 new Token(m.Value, tc, row, m.Index - columnStart + 1);
 
             foreach (Match m in regex.Matches(input)) {
-                Console.WriteLine(m.Value);
+                //Console.WriteLine(m.Value);
                 if (m.Groups["Newline"].Success) {
 
                     // Found a new line.
@@ -109,14 +112,14 @@ namespace Leviathan {
                     columnStart = m.Index + m.Length;
 
                 } else if (m.Groups["WhiteSpace"].Success
-                    || m.Groups["Comment"].Success) {
+                    || m.Groups["Comment"].Success || m.Groups["BlockComment"].Success) {
 
                     // Skip white space and comments.
 
                 } else if (m.Groups["Identifier"].Success) {
 
                     if (keywords.ContainsKey(m.Value)) {
-                        Console.WriteLine(m.Value + " is a keyword");
+                        //Console.WriteLine(m.Value + " is a keyword");
                         // Matched string is a Buttercup keyword.
                         yield return newTok(m, keywords[m.Value]);
 
@@ -132,7 +135,7 @@ namespace Leviathan {
                     yield return newTok(m, TokenCategory.ILLEGAL_CHAR);
 
                 } else {
-                    Console.WriteLine(m.Value + " is a nonKeyword");
+                    //Console.WriteLine(m.Value + " is a nonKeyword");
                     // Match must be one of the non keywords.
                     foreach (var name in nonKeywords.Keys) {
                         if (m.Groups[name].Success) {
