@@ -34,7 +34,7 @@ namespace Leviathan {
                 (?<And>        &&                )
               | (?<Assign>     [=]               )
               | (?<Comment>    [#]+.*            )
-              | (?<BlockComment>    [<][#]+[^<]*[#][>])
+              | (?<BlockComment>    [<][#].*?[#][>])
               | (?<CharLiteral> '[^'\n]'         )
               | (?<IntLiteral> -?\d+             )
               | (?<Identifier> [0-9a-zA-Z_]+     )
@@ -64,10 +64,10 @@ namespace Leviathan {
                 {"do", TokenCategory.DO},
                 {"return", TokenCategory.RETURN},
                 {"elif", TokenCategory.ELIF},
-                //{"boolLiteral", TokenCategory.BOOL_LITERAL},
                 {"else", TokenCategory.ELSE},
                 {"var", TokenCategory.VAR},
-                //{"false", TokenCategory.LIT_BOOL},
+                {"false", TokenCategory.FALSE},
+                {"true", TokenCategory.TRUE},
                 {"while", TokenCategory.WHILE}
             };
 
@@ -112,11 +112,18 @@ namespace Leviathan {
                     columnStart = m.Index + m.Length;
 
                 } else if (m.Groups["WhiteSpace"].Success
-                    || m.Groups["Comment"].Success || m.Groups["BlockComment"].Success) {
+                    || m.Groups["Comment"].Success) {
 
                     // Skip white space and comments.
 
-                } else if (m.Groups["Identifier"].Success) {
+                } else if(m.Groups["BlockComment"].Success) { 
+                    
+                    
+                    
+                    
+                    
+                    }
+                    else if (m.Groups["Identifier"].Success) {
 
                     if (keywords.ContainsKey(m.Value)) {
                         //Console.WriteLine(m.Value + " is a keyword");

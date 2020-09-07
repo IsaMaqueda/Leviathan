@@ -38,7 +38,6 @@ namespace Leviathan {
         PLUS,
         SEMI_COLON,
         // keywords 
-        BOOL_LITERAL,
         BREAK,
         DO,
         ELIF,

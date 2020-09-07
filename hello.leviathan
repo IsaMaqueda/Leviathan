@@ -7,5 +7,7 @@ main() {
     var x = "useless var";
     var z = 5;
     var a = 'c';
+    var b = true;
+    var c = false;
     prints("hello, world\n");
 }
