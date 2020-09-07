@@ -6,6 +6,15 @@
 main() {
     var x = "useless var";
     var z = 5;
+    z++;
+    z == z;
+    z >= z;
+    z <= z;
+    z != z;
+    z = z/z;
+    z = z%z;
+    z = !z;
+    z = (a||b);
     var a = 'c';
     var b = true;
     var c = false;

@@ -32,6 +32,8 @@ namespace Leviathan {
         static readonly Regex regex = new Regex(
             @"
                 (?<And>        &&                )
+              | (?<Equal>      [=][=]            )
+              | (?<Unequal>    [!][=]            )
               | (?<Assign>     [=]               )
               | (?<Comment>    [#]+.*            )
               | (?<BlockComment>    [<][#].*?[#][>])
@@ -40,11 +42,20 @@ namespace Leviathan {
               | (?<Identifier> [0-9a-zA-Z_]+     )
               | (?<StringLiteral> ""[^""\n]*""   )
               | (?<SemiColon>       [;]          )
+              | (?<LessEqual>       [<][=]       )
+              | (?<MoreEqual>       [>][=]       )
               | (?<Less>       [<]       )
+              | (?<More>       [>]       )
               | (?<Mul>        [*]       )
+              | (?<Decr>       [-][-]    )
               | (?<Neg>        [-]       )
+              | (?<Incr>       [+][+]    )
               | (?<Plus>       [+]       )
+              | (?<Not>        [!]       )
+              | (?<Or>        [|][|]       )
               | (?<Newline>    \n        )
+              | (?<Mod>        [%]       )
+              | (?<Div>        [/]       )
               | (?<ParLeft>    [(]       )
               | (?<ParRight>   [)]       )
               | (?<BraceLeft>   [{]      )
@@ -74,19 +85,29 @@ namespace Leviathan {
             static readonly IDictionary<string, TokenCategory> nonKeywords =
             new Dictionary<string, TokenCategory>() {
                 {"And", TokenCategory.AND},
+                {"Equal", TokenCategory.EQUAL},
+                {"Unequal", TokenCategory.UNEQUAL},
                 {"Assign", TokenCategory.ASSIGN},
-                //{"False", TokenCategory.FALSE},
                 {"CharLiteral", TokenCategory.CHAR_LITERAL},
                 {"IntLiteral", TokenCategory.INT_LITERAL},
                 {"StringLiteral", TokenCategory.STRING_LITERAL},
+                {"LessEqual", TokenCategory.LESS_EQUAL},
+                {"MoreEqual", TokenCategory.MORE_EQUAL},
+                {"More", TokenCategory.MORE},
                 {"Less", TokenCategory.LESS},
                 {"Mul", TokenCategory.MUL},
+                {"Div", TokenCategory.DIV},
+                {"Mod", TokenCategory.MOD},
+                {"Decr", TokenCategory.DECR},
                 {"Neg", TokenCategory.NEG},
                 {"ParLeft", TokenCategory.PARENTHESIS_OPEN},
                 {"ParRight", TokenCategory.PARENTHESIS_CLOSE},
                 {"BraceLeft", TokenCategory.BRACE_OPEN},
                 {"BraceRight", TokenCategory.BRACE_CLOSE},
+                {"Incr", TokenCategory.INCR},
                 {"Plus", TokenCategory.PLUS},
+                {"Not", TokenCategory.NOT},
+                {"Or", TokenCategory.OR},
                 {"SemiColon", TokenCategory.SEMI_COLON}
                 //{"True", TokenCategory.TRUE}
             };
