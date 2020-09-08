@@ -37,7 +37,7 @@ namespace Leviathan {
               | (?<Assign>     [=]               )
               | (?<Comment>    [#]+.*            )
               | (?<BlockComment>    [<][#].*?[#][>])
-              | (?<CharLiteral> '[^'\n]'         )
+              | (?<CharLiteral> [']([^\n\\']|[\\]([nrt]|[u][0-9a-fA-f]{6}))[']         )
               | (?<IntLiteral> -?\d+             )
               | (?<Identifier> [0-9a-zA-Z_]+     )
               | (?<StringLiteral> ""[^""\n]*""   )
