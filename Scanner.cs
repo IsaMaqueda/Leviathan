@@ -37,10 +37,11 @@ namespace Leviathan {
               | (?<Assign>     [=]               )
               | (?<Comment>    [#]+.*            )
               | (?<BlockComment>    [<][#].*?[#][>])
-              | (?<CharLiteral> [']([^\n\\']|[\\]([nrt]|[u][0-9a-fA-f]{6}))[']         )
+              | (?<CharLiteral> [']([^\n\\']|[\\]([nrt\\'""]|[u][0-9a-fA-f]{6}))['])
               | (?<IntLiteral> -?\d+             )
               | (?<Identifier> [0-9a-zA-Z_]+     )
               | (?<StringLiteral> ""[^""\n]*""   )
+              | (?<Comma>      [,]               )
               | (?<SemiColon>       [;]          )
               | (?<LessEqual>       [<][=]       )
               | (?<MoreEqual>       [>][=]       )
@@ -52,7 +53,7 @@ namespace Leviathan {
               | (?<Incr>       [+][+]    )
               | (?<Plus>       [+]       )
               | (?<Not>        [!]       )
-              | (?<Or>        [|][|]       )
+              | (?<Or>        [|][|]     )
               | (?<Newline>    \n        )
               | (?<Mod>        [%]       )
               | (?<Div>        [/]       )
@@ -60,6 +61,8 @@ namespace Leviathan {
               | (?<ParRight>   [)]       )
               | (?<BraceLeft>   [{]      )
               | (?<BraceRight>   [}]     )
+              | (?<BracketLeft> [[]      )
+              | (?<BracketRight> []]     )
               | (?<WhiteSpace> \s        )
               | (?<Other>      .         )     # Must be last: match any other character.
             ",
@@ -104,11 +107,14 @@ namespace Leviathan {
                 {"ParRight", TokenCategory.PARENTHESIS_CLOSE},
                 {"BraceLeft", TokenCategory.BRACE_OPEN},
                 {"BraceRight", TokenCategory.BRACE_CLOSE},
+                {"BracketLeft", TokenCategory.BRACKET_OPEN},
+                {"BracketRight", TokenCategory.BRACKET_CLOSE},
                 {"Incr", TokenCategory.INCR},
                 {"Plus", TokenCategory.PLUS},
                 {"Not", TokenCategory.NOT},
                 {"Or", TokenCategory.OR},
-                {"SemiColon", TokenCategory.SEMI_COLON}
+                {"SemiColon", TokenCategory.SEMI_COLON},
+                {"Comma", TokenCategory.COMMA}
                 //{"True", TokenCategory.TRUE}
             };
 
