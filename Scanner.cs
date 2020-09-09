@@ -36,11 +36,11 @@ namespace Leviathan {
               | (?<Unequal>    [!][=]            )
               | (?<Assign>     [=]               )
               | (?<Comment>    [#]+.*            )
-              | (?<BlockComment>    [<][#].*?[#][>])
+              | (?<BlockComment>    [<][#](.|\n)*?[#][>])
               | (?<CharLiteral> [']([^\n\\']|[\\]([nrt\\'""]|[u][0-9a-fA-f]{6}))['])
               | (?<IntLiteral> -?\d+             )
               | (?<Identifier> [0-9a-zA-Z_]+     )
-              | (?<StringLiteral> ""[^""\n]*""   )
+              | (?<StringLiteral> [""]([^\n\\""]|[\\]([nrt\\'""]|[u][0-9a-fA-f]{6}))*[""])
               | (?<Comma>      [,]               )
               | (?<SemiColon>       [;]          )
               | (?<LessEqual>       [<][=]       )
@@ -145,10 +145,14 @@ namespace Leviathan {
 
                 } else if(m.Groups["BlockComment"].Success) { 
                     
-                    
-                    
-                    
-                    
+                    int newLineCtr = 0;
+                    foreach(char e in m.Value){
+                        if(e=='\n'){
+                            newLineCtr++;
+                        }
+                    }
+                    row += newLineCtr;
+
                     }
                     else if (m.Groups["Identifier"].Success) {
 
