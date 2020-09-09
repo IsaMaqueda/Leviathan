@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Leviathan {
 
@@ -36,11 +37,11 @@ namespace Leviathan {
               | (?<Unequal>    [!][=]            )
               | (?<Assign>     [=]               )
               | (?<Comment>    [#]+.*            )
-              | (?<BlockComment>    [<][#].*?[#][>])
+              | (?<BlockComment>    [<][#](.|\n)*?[#][>])
               | (?<CharLiteral> [']([^\n\\']|[\\]([nrt\\'""]|[u][0-9a-fA-f]{6}))['])
               | (?<IntLiteral> -?\d+             )
               | (?<Identifier> [0-9a-zA-Z_]+     )
-              | (?<StringLiteral> ""[^""\n]*""   )
+              | (?<StringLiteral> [""]([^\n\\""]|[\\]([nrt\\'""]|[u][0-9a-fA-f]{6}))*[""]   )
               | (?<Comma>      [,]               )
               | (?<SemiColon>       [;]          )
               | (?<LessEqual>       [<][=]       )
@@ -145,10 +146,7 @@ namespace Leviathan {
 
                 } else if(m.Groups["BlockComment"].Success) { 
                     
-                    
-                    
-                    
-                    
+                    row += m.Value.Count(x => x == '\n');
                     }
                     else if (m.Groups["Identifier"].Success) {
 
