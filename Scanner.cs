@@ -41,7 +41,7 @@ namespace Leviathan {
               | (?<CharLiteral> [']([^\n\\']|[\\]([nrt\\'""]|[u][0-9a-fA-f]{6}))['])
               | (?<IntLiteral> -?\d+             )
               | (?<Identifier> [0-9a-zA-Z_]+     )
-              | (?<StringLiteral> [""]([^\n\\""]|[\\]([nrt\\'""]|[u][0-9a-fA-f]{6}))*[""]   )
+              | (?<StringLiteral> [""]([^\n\\""]|[\\]([nrt\\'""]|[u][0-9a-fA-f]{6}))*[""])
               | (?<Comma>      [,]               )
               | (?<SemiColon>       [;]          )
               | (?<LessEqual>       [<][=]       )
