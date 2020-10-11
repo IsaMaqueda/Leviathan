@@ -28,9 +28,10 @@ using System.Text;
 
 namespace Leviathan {
     public class Driver {
-        const string VERSION = "0.01";
+        const string VERSION = "0.02";
         static readonly string[] ReleaseIncludes = {
             "Lexical analysis"
+            "Syntactic analysis"
         };
 
          void PrintAppHeader() {
@@ -40,10 +41,19 @@ namespace Leviathan {
             Console.WriteLine("the GNU General Public License version 3 or "
                 + "later.");
             Console.WriteLine("This program has absolutely no warranty.");
-            Console.WriteLine("Hola, esto solo es una prueba");
+            Console.WriteLine("Hola, esto solo es una prueba 2");
          }
+
+         void PrintReleaseIncludes() {
+            Console.WriteLine("Included in this release:");
+            foreach (var phase in ReleaseIncludes) {
+                Console.WriteLine("   * " + phase);
+            }
+        }
         void Run (string[] args){
             PrintAppHeader();
+            Console.WriteLine();
+            PrintReleaseIncludes();
             Console.WriteLine();
             
             // Input file
@@ -56,19 +66,27 @@ namespace Leviathan {
             try {
                 var inputPath = args[0];
                 var input = File.ReadAllText(inputPath);
-
-                Console.WriteLine(String.Format(
+                /*Console.WriteLine(String.Format(
                     "===== Tokens from: \"{0}\" =====", inputPath)
                 );
                 var count = 1;
                 foreach (var tok in new Scanner(input).Start()) {
                     Console.WriteLine(String.Format("[{0}] {1}",
                                                     count++, tok)
-                    );
+                    );*/
+
+                var parser = new Parser(new Scanner(input).Start().GetEnumerator());
+                parser.Program();
+                Console.WriteLine("Syntax OK.");
+
+            } catch (Exception e) {
+
+                if (e is FileNotFoundException || e is SyntaxError) {
+                    Console.Error.WriteLine(e.Message);
+                    Environment.Exit(1);
                 }
-            } catch (FileNotFoundException f){
-                Console.Error.WriteLine(f.Message);
-                Environment.Exit(1);
+
+                throw;
             }
         }
 
