@@ -43,7 +43,7 @@ namespace Leviathan {
                 TokenCategory.DO,
                 TokenCategory.BREAK,
                 TokenCategory.RETURN,
-                TokenCategory.SEMICOLON
+                TokenCategory.SEMI_COLON,
             };
         static readonly ISet<TokenCategory> firstOfOpComp = 
             new HashSet<TokenCategory>() {
@@ -77,7 +77,29 @@ namespace Leviathan {
                 TokenCategory.NOT,
             };
 
-
+        static readonly ISet<TokenCategory> firstOfLit = 
+            new HashSet<TokenCategory>() {
+                TokenCategory.TRUE, 
+                TokenCategory.FALSE, 
+                TokenCategory.INT_LITERAL,
+                TokenCategory.CHAR_LITERAL,
+                TokenCategory.STRING_LITERAL,
+            };
+        
+        static readonly ISet<TokenCategory> firstOfExpr = 
+            new HashSet<TokenCategory>() {
+                TokenCategory.PLUS,
+                TokenCategory.LESS,
+                TokenCategory.NOT, 
+                TokenCategory.IDENTIFIER,
+                TokenCategory.BRACE_OPEN,
+                TokenCategory.PARENTHESIS_OPEN,
+                TokenCategory.TRUE,
+                TokenCategory.FALSE, 
+                TokenCategory.INT_LITERAL,
+                TokenCategory.CHAR_LITERAL,
+                TokenCategory.STRING_LITERAL,
+            };
         /*
         static readonly ISet<TokenCategory> firstOfExprPrimary = 
             new HashSet<TokenCategory>() {
@@ -152,22 +174,16 @@ namespace Leviathan {
             IdList();
         }
 
-        public void IdList() //<id-list> ::= <id> <id-list-cont>
+        public void IdList() //<id-list> ::= <id> (“,” <id>)* ////
         {
             Expect(TokenCategory.IDENTIFIER);
-            IdListCont();
+            while (CurrentToken == TokenCategory.COMMA)
+            {
+                Expect(TokenCategory.COMMA);
+                Expect(TokenCategory.IDENTIFIER);
+            }
         }
         
-        public void IdListCont() //<id-list-cont>::= , ¨<id>(<id-list-cont>)*
-        {
-            Expect(TokenCategory.COMMA);
-            Expect(TokenCategory.IDENTIFIER);
-            while(CurrentToken==TokenCategory.COMMA){
-                IdListCont();
-            }
-            
-        }
-
         public void FunDef() //<fun def> :: = <id> “(“ <param-list> “)” “{“ <var-def-list><stmt-list> ”}”
         {
             Expect(TokenCategory.IDENTIFIER);
@@ -205,29 +221,13 @@ namespace Leviathan {
         }
 
         public void Stmt() { //<stmt>::=‹stmt-assign›|‹stmt-incr›|‹stmt-decr›|‹stmt-fun-call›|‹stmt-if›|‹stmt-while›|‹stmt-do-while›|‹stmt-break›|‹stmt-return›|‹stmt-empty›
-            //Expect(TokenCategory.IDENTIFIER); // DUDA 2 
+            
             switch (CurrentToken) {
 
-            /*case TokenCategory.IDENTIFIER:
+            case TokenCategory.IDENTIFIER:
                     StmtIdentifier();
-                    break; */
-            
-            case TokenCategory.ASSIGN:
-                StmtAssign();
-                break;
-
-            case TokenCategory.INCR:
-                StmtIncr();
-                break;
-
-            case TokenCategory.DECR:
-                StmtDecr();
-                break;
-
-            /*case TokenCategory.:  //DUDA 2.1
-                StmtFunCall(); 
-                break;*/
-            
+                    break;
+                
             case TokenCategory.IF:
                 StmtIf();
                 break;
@@ -247,47 +247,49 @@ namespace Leviathan {
                 StmtReturn();
                 break;
             
-            case TokenCategory.SEMICOLON:
+            case TokenCategory.SEMI_COLON:
                 StmtEmpty();
                 break;
             default:
-                throw new SyntaxError(firstOfStmt, tokenStream.Current);
+                throw new SyntaxError(firstOfStatement, tokenStream.Current);
             }
         }
-        /* DUDA
+        
         public void StmtIdentifier()
         {
             Expect(TokenCategory.IDENTIFIER);
 
             switch (CurrentToken) {
                 case TokenCategory.ASSIGN:
-                StmtAssign();
-                break;
+                    StmtAssign();
+                    
+                    break;
 
                 case TokenCategory.INCR:
-                StmtIncr();
-                break;
+                    StmtIncr();
+                    break;
 
                 case TokenCategory.DECR:
-                StmtDecr();
-                break;
+                    StmtDecr();
+                    break;
 
                 case TokenCategory.PARENTHESIS_OPEN:
-                stmt-fun-call();
+                    StmtFunCall();
+                    break;
+                default:
+                    throw new SyntaxError(firstOfStatement, tokenStream.Current);
+
                 
             }
         }
-        */
         public void StmtAssign() //<stmt-assign>::=<id>”=”<expr>”;”
         { 
-            Expect(TokenCategory.IDENTIFIER); //  not if used StmtIDentifier 
             Expect(TokenCategory.ASSIGN);
             Expr();
             Expect(TokenCategory.SEMI_COLON);
         }
         public void StmtIncr() // <stmt-assign>::=<id>”++” ”;”
         {
-            Expect(TokenCategory.IDENTIFIER); //  not if used StmtIDentifier 
             Expect(TokenCategory.INCR);
             Expect(TokenCategory.SEMI_COLON);
         }
@@ -295,7 +297,6 @@ namespace Leviathan {
 
         public void StmtDecr()
         {
-            Expect(TokenCategory.IDENTIFIER); //
             Expect(TokenCategory.DECR);
             Expect(TokenCategory.SEMI_COLON);
         }
@@ -306,14 +307,16 @@ namespace Leviathan {
             Expect(TokenCategory.SEMI_COLON);
         }
         public void FunCall(){ //‹fun-call› :: = ‹id› “(“ ‹expr-list› “)”
-            Expect(TokenCategory.IDENTIFIER); // 
+        
             Expect(TokenCategory.PARENTHESIS_OPEN);
             ExprList();
+            Console.WriteLine("FunCall");
             Expect(TokenCategory.PARENTHESIS_CLOSE);
         }
         public void ExprList(){ //<expr-list> ::= (<expr><expr-list-cont>)?
-             if(CurrentToken == TokenCategory.IDENTIFIER)
+            if(firstOfExpr.Contains(CurrentToken))
             {
+                Console.WriteLine("Expresion list");
                 Expr();
                 ExprListCont();
             }
@@ -322,7 +325,8 @@ namespace Leviathan {
             
             while(CurrentToken == TokenCategory.COMMA)
             {
-                //Expect(TokenCategory.COMMA);
+                Console.WriteLine("ExprListCont");
+                Expect(TokenCategory.COMMA);
                 Expr();
             }
         }
@@ -346,9 +350,10 @@ namespace Leviathan {
                 Expect(TokenCategory.ELIF);
                 Expect(TokenCategory.PARENTHESIS_OPEN);
                 Expr();
+                Expect(TokenCategory.PARENTHESIS_CLOSE);
                 Expect(TokenCategory.BRACE_OPEN);
                 StmtList();
-                Expect(TokenCategory.BRACE_OPEN);
+                Expect(TokenCategory.BRACE_CLOSE);
             }
             
         }
@@ -359,7 +364,7 @@ namespace Leviathan {
             {   Expect(TokenCategory.ELSE);
                 Expect(TokenCategory.BRACE_OPEN);
                 StmtList();
-                Expect(TokenCategory.BRACE_OPEN);
+                Expect(TokenCategory.BRACE_CLOSE);
             }
         }
 
@@ -388,7 +393,7 @@ namespace Leviathan {
         public void StmtBreak() //<stmt-break> ::= “”break” ”;”
         {
             Expect(TokenCategory.BREAK);
-            Expect(TokenCategory.SE);
+            Expect(TokenCategory.SEMI_COLON);
         }
         
         public void StmtReturn() //<stmt> ::= “return” <expr> “;”
@@ -497,8 +502,8 @@ namespace Leviathan {
                 case TokenCategory.PLUS:
                     Expect(TokenCategory.PLUS);
                     break;
-                case TokenCategory.LESS:
-                    Expect(TokenCategory.LESS); 
+                case TokenCategory.NEG:
+                    Expect(TokenCategory.NEG); 
                     break;                
                 default:
                     throw new SyntaxError(firstOfOpAdd,tokenStream.Current);
@@ -535,8 +540,10 @@ namespace Leviathan {
         public void ExprUnary() // ‹expr-unary› ::=  ‹op-unary› * ‹expr-primary›
         {
             while(firstOfOpUnary.Contains(CurrentToken)){
+                Console.WriteLine("ExprUnary on OPUnary");
                 OpUnary();    
             }
+            Console.WriteLine("ExprUnary");
             ExprPrimary();
         }
         public void OpUnary()
@@ -558,20 +565,42 @@ namespace Leviathan {
         }
       
         public void ExprPrimary(){ //<expr-primary> ::= <id> | <fun-call> | <array> | <lit> | (“(“ <expr> “)”) DUDA
-            switch(CurrentToken){
-                case TokenCategory.IDENTIFIER:
-                    Expect(TokenCategory.IDENTIFIER);
-                    break;
-                case TokenCategory:
-                    break;
+            
+            if(firstOfLit.Contains(CurrentToken)){
+                Lit();
+            } else {
+                switch(CurrentToken){
+
+                    case TokenCategory.IDENTIFIER:
+                        ExprPrimaryIdentifier();
+                        break;
+                    case TokenCategory.BRACKET_OPEN:
+                        Array();
+                        break;
+                    case TokenCategory.PARENTHESIS_OPEN:
+                        Expr();
+                        break;
+                    default: 
+                        throw new SyntaxError(TokenCategory.PARENTHESIS_OPEN,
+                                      tokenStream.Current);
+
+                }
+            }
+        }
+
+        public void ExprPrimaryIdentifier()//error because does not need 
+        {
+            Expect(TokenCategory.IDENTIFIER);
+            if(CurrentToken==TokenCategory.PARENTHESIS_OPEN){
+                FunCall();
             }
         }
 
         public void Array() //<array>::= “[“ <expr-list> “]”
         {
-            Expect(TokenCategory.BRACE_OPEN);
+            Expect(TokenCategory.BRACKET_OPEN);
             ExprList();
-            Expect(TokenCategory.BRACE_CLOSE);
+            Expect(TokenCategory.BRACKET_CLOSE);
             
         }
         

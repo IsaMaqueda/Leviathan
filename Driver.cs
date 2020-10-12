@@ -30,8 +30,8 @@ namespace Leviathan {
     public class Driver {
         const string VERSION = "0.02";
         static readonly string[] ReleaseIncludes = {
-            "Lexical analysis"
-            "Syntactic analysis"
+            "Lexical analysis " +
+            "Syntac analysis"
         };
 
          void PrintAppHeader() {
