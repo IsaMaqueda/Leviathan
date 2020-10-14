@@ -73,7 +73,7 @@ namespace Leviathan {
         static readonly ISet<TokenCategory> firstOfOpUnary = 
             new HashSet<TokenCategory>() {
                 TokenCategory.PLUS, 
-                TokenCategory.LESS, 
+                TokenCategory.NEG, 
                 TokenCategory.NOT,
             };
 
@@ -100,19 +100,7 @@ namespace Leviathan {
                 TokenCategory.CHAR_LITERAL,
                 TokenCategory.STRING_LITERAL,
             };
-        /*
-        static readonly ISet<TokenCategory> firstOfExprPrimary = 
-            new HashSet<TokenCategory>() {
-                TokenCategory.IDENTIFIER, 
-                TokenCategory.BRACKET_OPEN, 
-                TokenCategory.TRUE,
-                TokenCategory.FALSE,
-                TokenCategory.CHAR_LITERAL,
-                TokenCategory.INT_LITERAL,
-                TokenCategory.STRING_LITERAL,
-                TokenCategory.PARENTHESIS_OPEN
-            };
-        */
+        
         IEnumerator<Token> tokenStream;
 
         public Parser(IEnumerator<Token> tokenStream) {
@@ -310,13 +298,13 @@ namespace Leviathan {
         
             Expect(TokenCategory.PARENTHESIS_OPEN);
             ExprList();
-            Console.WriteLine("FunCall");
+            //Console.WriteLine("FunCall");
             Expect(TokenCategory.PARENTHESIS_CLOSE);
         }
         public void ExprList(){ //<expr-list> ::= (<expr><expr-list-cont>)?
             if(firstOfExpr.Contains(CurrentToken))
             {
-                Console.WriteLine("Expresion list");
+                //Console.WriteLine("Expresion list");
                 Expr();
                 ExprListCont();
             }
@@ -325,7 +313,7 @@ namespace Leviathan {
             
             while(CurrentToken == TokenCategory.COMMA)
             {
-                Console.WriteLine("ExprListCont");
+                //Console.WriteLine("ExprListCont");
                 Expect(TokenCategory.COMMA);
                 Expr();
             }
@@ -540,10 +528,10 @@ namespace Leviathan {
         public void ExprUnary() // ‹expr-unary› ::=  ‹op-unary› * ‹expr-primary›
         {
             while(firstOfOpUnary.Contains(CurrentToken)){
-                Console.WriteLine("ExprUnary on OPUnary");
+                //Console.WriteLine("ExprUnary on OPUnary");
                 OpUnary();    
             }
-            Console.WriteLine("ExprUnary");
+            //Console.WriteLine("ExprUnary");
             ExprPrimary();
         }
         public void OpUnary()
@@ -578,7 +566,9 @@ namespace Leviathan {
                         Array();
                         break;
                     case TokenCategory.PARENTHESIS_OPEN:
+                        Expect(TokenCategory.PARENTHESIS_OPEN);
                         Expr();
+                        Expect(TokenCategory.PARENTHESIS_CLOSE);
                         break;
                     default: 
                         throw new SyntaxError(TokenCategory.PARENTHESIS_OPEN,

@@ -31,7 +31,7 @@ namespace Leviathan {
         const string VERSION = "0.02";
         static readonly string[] ReleaseIncludes = {
             "Lexical analysis " +
-            "Syntac analysis"
+            "and Syntax analysis"
         };
 
          void PrintAppHeader() {
