@@ -28,7 +28,7 @@ sum_array(a) {
     sum = 0;
     i = 0;
     n = size(a);
-    while (i < n) {
+     while(i < n) {
         sum = sum + get(a, i);
         i++;
     }

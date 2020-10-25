@@ -1,5 +1,5 @@
 /*
-    Levithan Compiler - Lexical Analisys
+    Levithan Compiler - AST construction
 
     Camila Rovirosa A01024192
     Eduardo Badillo A01020716
@@ -28,10 +28,13 @@ using System.Text;
 
 namespace Leviathan {
     public class Driver {
-        const string VERSION = "0.02";
+        const string VERSION = "0.3";
+
+        //-----------------------------------------------------------
         static readonly string[] ReleaseIncludes = {
-            "Lexical analysis " +
-            "and Syntax analysis"
+            "Lexical analysis",
+            "Syntactic analysis",
+            "AST construction"
         };
 
          void PrintAppHeader() {
@@ -41,7 +44,6 @@ namespace Leviathan {
             Console.WriteLine("the GNU General Public License version 3 or "
                 + "later.");
             Console.WriteLine("This program has absolutely no warranty.");
-            Console.WriteLine("Hola, esto solo es una prueba 2");
          }
 
          void PrintReleaseIncludes() {
@@ -76,8 +78,8 @@ namespace Leviathan {
                     );*/
 
                 var parser = new Parser(new Scanner(input).Start().GetEnumerator());
-                parser.Program();
-                Console.WriteLine("Syntax OK.");
+                var program = parser.Program();
+                Console.Write(program.ToStringTree());
 
             } catch (Exception e) {
 

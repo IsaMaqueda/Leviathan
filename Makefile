@@ -1,7 +1,9 @@
-#
-# Buttercup compiler - Project make file:
-# Copyright (C) 2013-2020 Ariel Ortiz, ITESM CEM
-#
+# Levithan Compiler - AST construction
+
+#   Camila Rovirosa A01024192
+#   Eduardo Badillo A01020716
+#   Isabel Maqueda  A01652906
+
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -17,10 +19,10 @@
 #
 
 leviathan.exe: Driver.cs Scanner.cs Token.cs TokenCategory.cs Parser.cs \
-	SyntaxError.cs
+	SyntaxError.cs Node.cs SpecificNodes.cs
 
 	mcs -out:leviathan.exe Driver.cs Scanner.cs Token.cs TokenCategory.cs \
-	Parser.cs SyntaxError.cs
+	Parser.cs SyntaxError.cs Node.cs SpecificNodes.cs
 
 clean:
 	rm leviathan.exe

@@ -1,5 +1,5 @@
 /*
-    Levithan Compiler - Lexical Analisys
+    Levithan Compiler - AST construction
 
     Camila Rovirosa A01024192
     Eduardo Badillo A01020716
