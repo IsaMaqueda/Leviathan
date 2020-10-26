@@ -602,6 +602,27 @@ namespace Leviathan {
        }
         public Node Expr() //<expr> ::= <expr-or> No es nodo DUDA, return empty node
         { 
+            //var expr = new Expr();
+
+            //expr.Add(ExprOr()); 
+            //‹expr-or›::= ‹expr-and› ("||" ‹expr-and›)*
+            //expr.Add(ExprAnd());
+            var expr = ExprAnd();
+            while(CurrentToken == TokenCategory.OR){
+                var expr2 = new ExprOr(){
+                    AnchorToken = Expect(TokenCategory.OR)
+                };
+                expr2.Add(expr);
+                expr2.Add(ExprAnd());
+                expr = expr2;
+            }
+
+            return expr; 
+        }
+
+        /*
+        public Node Expr() //<expr> ::= <expr-or> No es nodo DUDA, return empty node
+        { 
             var expr = new Expr();
 
             //expr.Add(ExprOr()); 
@@ -615,6 +636,7 @@ namespace Leviathan {
 
             return expr; 
         }
+        */
         /* public Node ExprOr() //‹expr-or›::= ‹expr-and› ("||" ‹expr-and›)*
         {
             var expror = new ExprOr();
@@ -629,27 +651,35 @@ namespace Leviathan {
         }*/
         public Node ExprAnd() //‹expr-and› ::= ‹expr-comp› ("&&" ‹expr-comp›)*
         {
-            var exprand = new ExprAnd();
-            exprand.Add(ExprComp());
+            /*var exprand = new ExprAnd();
+            exprand.Add(ExprComp());*/
+            var initExpr = ExprComp();
             while(CurrentToken == TokenCategory.AND){
-                Expect(TokenCategory.AND);
-                exprand.Add(ExprComp());
-                //ExprComp();
+                var expr2 = new ExprAnd(){
+                    AnchorToken = Expect(TokenCategory.AND)
+                };
+                expr2.Add(initExpr);
+                //exprand.Add(ExprComp());
+                expr2.Add(ExprComp());
+                initExpr = expr2;
             }
-            return exprand;
+            return initExpr;
         }
 
         public Node ExprComp() //<expr-comp>::= <expr-rel>(<op-comp><expr-rel>)* DUDA
         {
-            var exprcomp = new ExprComp();
-            exprcomp.Add(ExprRel());
+            //var exprcomp = new ExprComp();
+            var initExpr = ExprRel();
+            //exprcomp.Add(ExprRel());
             while(firstOfOpComp.Contains(CurrentToken)){
-                exprcomp.Add(OpComp());
-                exprcomp.Add(ExprRel());
-                
+                var expr2 = OpComp();
+                expr2.Add(initExpr);
+                expr2.Add(ExprRel());
+                initExpr = expr2;
+                //exprcomp.Add(OpComp());
+                //exprcomp.Add(ExprRel());
             }
-
-            return exprcomp;
+            return initExpr;
         }
 
         public Node OpComp(){
@@ -668,13 +698,17 @@ namespace Leviathan {
         }
         public Node ExprRel() //<expr-rel>::=<expr-add>(<op-rel><expr-add>)*
         {
-            var exprel = new ExprRel();
-            exprel.Add(ExprAdd());
+            var initExpr = ExprAdd();
+            //exprel.Add(ExprAdd());
             while(firstOfOpRel.Contains(CurrentToken)){
-                exprel.Add(OpRel());
-                exprel.Add(ExprAdd());
+                var expr2 = OpRel();
+                expr2.Add(initExpr);
+                expr2.Add(ExprAdd());
+                initExpr = expr2;
+                //exprel.Add(OpRel());
+                //exprel.Add(ExprAdd());
             }
-            return exprel;
+            return initExpr;
         }
 
         public Node OpRel(){ //<opr-rel> ::= “<”| “<=” | “>” | “>=”
@@ -707,13 +741,18 @@ namespace Leviathan {
         }
         public Node ExprAdd() // <expr-add> ::= <expr-mul>(<op-add><expr-mul>) * 
         {
-            var expradd = new ExprAdd();
-            expradd.Add(ExprMul());
+            //var expradd = new ExprAdd();
+            //expradd.Add(ExprMul());
+            var initExpr = ExprMul();
             while(firstOfOpAdd.Contains(CurrentToken)){
-                expradd.Add(OpAdd());
-                expradd.Add(ExprMul());
+                var expr2 = OpAdd();
+                expr2.Add(initExpr);
+                expr2.Add(ExprMul());
+                initExpr = expr2;
+                //expradd.Add(OpAdd());
+                //expradd.Add(ExprMul());
             }
-            return expradd;
+            return initExpr;
             /*ExprMul();
             while(firstOfOpAdd.Contains(CurrentToken)){
                 OpAdd();
@@ -741,6 +780,18 @@ namespace Leviathan {
 
         public Node ExprMul() // <expr-mul> ::= <expr-unary>(<op-mul><expr-unary>)*
         {
+            var initExpr = ExprUnary();
+            while(firstOfOpMul.Contains(CurrentToken)){
+                var expr2 = OpMul();
+                expr2.Add(initExpr);
+                expr2.Add(ExprUnary());
+                initExpr = expr2;
+                //var expr2 = OpMul();
+                //exprmul.Add(OpMul());
+                //exprmul.Add(ExprUnary());
+            }
+            return initExpr;
+            /*
             var exprmul = new ExprMul();
             exprmul.Add(ExprUnary());
             
@@ -749,6 +800,7 @@ namespace Leviathan {
                 exprmul.Add(ExprUnary());
             }
             return exprmul;
+            */
         }
 
         public Node OpMul(){ //<op-mul>::= ”*” | “/” | “%”
@@ -773,6 +825,22 @@ namespace Leviathan {
         }
         public Node ExprUnary() // ‹expr-unary› ::=  ‹op-unary› * ‹expr-primary›
         {
+            
+            var rootNode = ExprPrimary();
+            while(firstOfOpUnary.Contains(CurrentToken)){
+                //Console.WriteLine("ExprUnary on OPUnary");
+                var node = OpUnary();
+                node.Add(rootNode);
+                rootNode = node;
+            }
+            //Console.WriteLine("ExprUnary");
+            
+            return rootNode;
+        }
+
+        /*
+        public Node ExprUnary() // ‹expr-unary› ::=  ‹op-unary› * ‹expr-primary›
+        {
             var exprunary = new ExprUnary();
             while(firstOfOpUnary.Contains(CurrentToken)){
                 //Console.WriteLine("ExprUnary on OPUnary");
@@ -782,6 +850,7 @@ namespace Leviathan {
             exprunary.Add(ExprPrimary());
             return exprunary;
         }
+        */
         public Node OpUnary() // <op-unary> ::= “+” | “-” | “!”
         {
             switch(CurrentToken){
@@ -805,31 +874,35 @@ namespace Leviathan {
       
         public Node ExprPrimary(){ //<expr-primary> ::= <id> | <fun-call> | <array> | <lit> | (“(“ <expr> “)”) DUDA
             
-            var exprprimary = new ExprPrimary();
+            //var exprprimary = new ExprPrimary();
             if(firstOfLit.Contains(CurrentToken)){
-                Lit();
+                //exprprimary.Add(Lit());
+                return Lit();
             } else {
                 switch(CurrentToken){
 
                     case TokenCategory.IDENTIFIER:
-                        exprprimary.Add(ExprPrimaryIdentifier());
-                        break;
+                        //exprprimary.Add(ExprPrimaryIdentifier());
+                        return ExprPrimaryIdentifier();
+                        //break;
                     case TokenCategory.BRACKET_OPEN:
-                        exprprimary.Add(Array());
-                        break;
+                        //exprprimary.Add(Array());
+                        return Array();
+                        //break;
                     case TokenCategory.PARENTHESIS_OPEN:
                         Expect(TokenCategory.PARENTHESIS_OPEN);
-                        exprprimary.Add(Expr());
+                        //exprprimary.Add(Expr());
+                        var expr = Expr();
                         Expect(TokenCategory.PARENTHESIS_CLOSE);
-                        break;
+                        return expr;
+                        //break;
                     default: 
                         throw new SyntaxError(TokenCategory.PARENTHESIS_OPEN,
                                       tokenStream.Current);
 
                 }
             }
-
-            return exprprimary;
+            //return exprprimary;
         }
 
         public Node ExprPrimaryIdentifier()//error because does not need 
