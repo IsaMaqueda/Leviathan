@@ -126,9 +126,8 @@ namespace Leviathan {
           var prog = new Program();
           prog.Add(DefList());
             //DefList();
-           Expect(TokenCategory.EOF);
-
-            return prog;
+          Expect(TokenCategory.EOF);
+          return prog;
         }
         
 
@@ -166,10 +165,11 @@ namespace Leviathan {
             };
             
             //vardef.Add(VarList()); <var-list>::=<id-list>
-            var varlist = new VarList();
-            varlist.Add(IdList());
+            //var varlist = new VarList();
+            //varlist.Add(IdList());
 
-            vardef.Add(varlist);
+            //vardef.Add(varlist);
+            vardef.Add(IdList());
             ///    
             Expect(TokenCategory.SEMI_COLON);
 
@@ -192,8 +192,16 @@ namespace Leviathan {
 
         public Node IdList() //<id-list> ::= <id> (“,” <id>)* ////
         {
+            var firstIdToken = Expect(TokenCategory.IDENTIFIER);
+            /*
             var idlist = new IdList(){
                 AnchorToken = Expect(TokenCategory.IDENTIFIER)
+            };
+            */
+            var idlist = new IdList(){
+                new Identifier(){
+                    AnchorToken = firstIdToken
+                }
             };
 
             while (CurrentToken == TokenCategory.COMMA)
@@ -230,7 +238,14 @@ namespace Leviathan {
 
             Expect(TokenCategory.PARENTHESIS_CLOSE);
             Expect(TokenCategory.BRACE_OPEN);
-            var vardeflist = VarDefList();
+            
+            //var vardeflist = VarDefList(); <var-def-list> ::= <var-def>*
+            var vardeflist = new VarDefList();
+            while (CurrentToken == TokenCategory.VAR)
+            {
+                vardeflist.Add(VarDef());
+            }
+            ///
             var stmtlist = StmtList();
             Expect(TokenCategory.BRACE_CLOSE);
 
@@ -267,6 +282,7 @@ namespace Leviathan {
             return paramlist;
         }
         */
+        /*
         public Node VarDefList()// <var-def-list> ::= <var-def>*
         {
             var vardeflist = new VarDefList();
@@ -276,7 +292,7 @@ namespace Leviathan {
             }
             return vardeflist;
         }
-
+        */
         public Node StmtList()//<stmt-list> ::= <stmt>*
         {
             var stmtlist = new StmtList();
@@ -342,16 +358,21 @@ namespace Leviathan {
 
             return stmtidentifier;
         }
+
+        
         public Node StmtAssign() //<stmt-assign>::=<id>”=”<expr>”;”
         { 
             Console.WriteLine("StmtAssign");
-            var assignToken = Expect(TokenCategory.ASSIGN);
+            //var assignToken = Expect(TokenCategory.ASSIGN);
+            Expect(TokenCategory.ASSIGN);
             var expe = Expr();
             var result = new StmtAssign(){ expe } ;
             Expect(TokenCategory.SEMI_COLON);
-            result.AnchorToken = assignToken;
+            //result.AnchorToken = assignToken;
             return result;
         }
+        
+        
         public Node StmtIncr() // <stmt-assign>::=<id>”++” ”;”
         {
             var stmtincr = new StmtIncr(){
@@ -382,38 +403,41 @@ namespace Leviathan {
             return stmtfuncall;
         }
         public Node FunCall(){ //‹fun-call› :: = ‹id› “(“ ‹expr-list› “)”
+            Console.WriteLine("FunCall");
             Expect(TokenCategory.PARENTHESIS_OPEN);
             var exprlist = ExprList();
             var funcall = new FunCall(){
                 exprlist
             };
-            Console.WriteLine("FunCall");
+            
             Expect(TokenCategory.PARENTHESIS_CLOSE);
             return funcall;
         }
         public Node ExprList(){ //<expr-list> ::= (<expr><expr-list-cont>)? duda: nodo vacio 
             var exprlist = new ExprList();
-
-            var expr1 = Expr();
-
-            //var exprlistcont = ExprListCont(); <expr-list-cont> ::=( “,” <expr>)*
-            var exprlistcont = new ExprListCont();
-
-            while(CurrentToken == TokenCategory.COMMA)
-            {
-                Expect(TokenCategory.COMMA);
-                var expr2 = Expr();
-                exprlistcont.Add(expr2);
-            }
-
-            //
             if(firstOfExpr.Contains(CurrentToken))
             {
-                //Console.WriteLine("Expresion list");
-                exprlist.Add(expr1);
-                exprlist.Add(exprlistcont);
-                //Expr();
-                //ExprListCont();
+                //var expr1 = Expr();
+                exprlist.Add(Expr());
+
+                //var exprlistcont = ExprListCont(); <expr-list-cont> ::=( “,” <expr>)*
+                //var exprlistcont = new ExprListCont();
+
+                while(CurrentToken == TokenCategory.COMMA)
+                {
+                    Expect(TokenCategory.COMMA);
+                    //var expr2 = Expr();
+                    //exprlistcont.Add(expr2);
+                    exprlist.Add(Expr());
+                }
+
+                //
+                
+                    //Console.WriteLine("Expresion list");
+                    //exprlist.Add(expr1);
+                    //exprlist.Add(exprlistcont);
+                    //Expr();
+                    //ExprListCont();
             }
             return exprlist;
         }
@@ -815,7 +839,7 @@ namespace Leviathan {
             };
             //Expect(TokenCategory.IDENTIFIER);
             if(CurrentToken==TokenCategory.PARENTHESIS_OPEN){
-                Console.WriteLine("Error en Expr Primary Identifier");
+                Console.WriteLine("Expr Primary Identifier");
                 exprprimaryid.Add(FunCall());
             }
             return exprprimaryid;
