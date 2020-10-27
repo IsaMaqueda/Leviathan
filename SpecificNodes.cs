@@ -26,23 +26,18 @@ namespace Leviathan {
     class Program: Node {}
     class Identifier: Node {}
     class DefList: Node {}
-    class Def: Node {}
     class VarDef : Node {}
-    class VarList : Node {}
     class IdList : Node {}
     class FunDef : Node {}
     class ParamList : Node {}
     class VarDefList : Node {}
     class StmtList: Node {}
-    class Stmt: Node {}
-    class StmtIdentifier: Node {}
     class StmtAssign: Node {}
     class StmtIncr: Node {}
     class StmtDecr: Node {}
     class StmtFunCall: Node {}
     class FunCall: Node {}
     class ExprList: Node {}
-    class ExprListCont: Node {}
     class StmtIf: Node {}
     class Elif : Node {}
     class ElseIfList: Node {}
@@ -52,24 +47,11 @@ namespace Leviathan {
     class StmtBreak: Node {}
     class StmtReturn: Node {}
     class StmtEmpty: Node {}
-    class Expr: Node {}
     class ExprOr: Node {}
     class ExprAnd: Node {}
-    class ExprComp: Node {}
-    class OpComp: Node {}
-    class ExprRel: Node {}
-    class OpRel: Node {}
-    class ExprAdd: Node {}
-    class OpAdd: Node {}
-    class ExprMul: Node {}
-    class OpMul: Node {}
-    class ExprUnary: Node {}
-    class OpUnary: Node {}
-    class ExprPrimary: Node {}
-    class ExprPrimaryIdentifier: Node {}
     class Array: Node {}
-    class Lit: Node {}
-
+    class LoopCondition : Node {}
+    class Condition : Node {}
    // Operators 
     class Equal: Node {}
     class UnEqual: Node {}

@@ -134,14 +134,14 @@ namespace Leviathan {
 
         public Node DefList() // def-list ::=  <def>*
         { 
-            //var deflist = new DefList();
-            var def = new Def();
+            var deflist = new DefList();
+            //var def = new Def();
             while(firstOfDefinition.Contains(CurrentToken)){
                 // add node hijo
-                def.Add(Def());
+                deflist.Add(Def());
                 //Def();
             }
-            return def;
+            return deflist;
         }
         
         public Node Def() //def ::= <var-def>|<fun-def>
@@ -332,71 +332,79 @@ namespace Leviathan {
         
         public Node StmtIdentifier()
         {
+            var idtoken = Expect(TokenCategory.IDENTIFIER);
+            /*
             var stmtidentifier = new StmtIdentifier(){
                 AnchorToken = Expect(TokenCategory.IDENTIFIER)
             };
-
+            */
             switch (CurrentToken) {
                 case TokenCategory.ASSIGN:
-                    stmtidentifier.Add(StmtAssign());
-                    break;
+                    return StmtAssign(idtoken);
+                    //break;
 
                 case TokenCategory.INCR:
-                    stmtidentifier.Add(StmtIncr());
-                    break;
+                    return StmtIncr(idtoken);
+                    //break;
 
                 case TokenCategory.DECR:
-                    stmtidentifier.Add(StmtDecr());
-                    break;
+                    return StmtDecr(idtoken);
+                    //break;
 
                 case TokenCategory.PARENTHESIS_OPEN:
-                    stmtidentifier.Add(StmtFunCall());
-                    break;
+                    return StmtFunCall(idtoken);
+                    //break;
                 default:
                     throw new SyntaxError(firstOfStatement, tokenStream.Current);         
             }
 
-            return stmtidentifier;
+            //return stmtidentifier;
         }
 
         
-        public Node StmtAssign() //<stmt-assign>::=<id>”=”<expr>”;”
+        public Node StmtAssign(Token token) //<stmt-assign>::=<id>”=”<expr>”;”
         { 
             Console.WriteLine("StmtAssign");
+            var stmtassign = new StmtAssign(){
+                AnchorToken = token
+            };
             //var assignToken = Expect(TokenCategory.ASSIGN);
             Expect(TokenCategory.ASSIGN);
             var expe = Expr();
-            var result = new StmtAssign(){ expe } ;
+            //var result = new StmtAssign(){ expe } ;
+            stmtassign.Add(expe);
             Expect(TokenCategory.SEMI_COLON);
             //result.AnchorToken = assignToken;
-            return result;
+            return stmtassign;
         }
         
         
-        public Node StmtIncr() // <stmt-assign>::=<id>”++” ”;”
+        public Node StmtIncr(Token token) // <stmt-assign>::=<id>”++” ”;”
         {
             var stmtincr = new StmtIncr(){
-                AnchorToken = Expect(TokenCategory.INCR)
+                AnchorToken = token
             };
-            //Expect(TokenCategory.INCR);
+            Expect(TokenCategory.INCR);
             Expect(TokenCategory.SEMI_COLON);
             return stmtincr;
         }
 
 
-        public Node StmtDecr() //<stmt-assign>::=<id>”--” ”;”
+        public Node StmtDecr(Token token) //<stmt-assign>::=<id>”--” ”;”
         {
             var stmtdecr = new StmtDecr(){
-                AnchorToken = Expect(TokenCategory.DECR)
+                AnchorToken = token
             };
-            //Expect(TokenCategory.INCR);
+            Expect(TokenCategory.DECR);
             Expect(TokenCategory.SEMI_COLON);
             return stmtdecr;
         }
 
-        public Node StmtFunCall() //<stm-fun-call>::=<fun-call>”;” No es nodo
+        public Node StmtFunCall(Token token) //<stm-fun-call>::=<fun-call>”;” No es nodo
         {
-            var stmtfuncall = new StmtFunCall();
+            var stmtfuncall = new StmtFunCall(){
+                AnchorToken = token
+            };
             stmtfuncall.Add(FunCall());
             Expect(TokenCategory.SEMI_COLON);
 
@@ -406,12 +414,8 @@ namespace Leviathan {
             Console.WriteLine("FunCall");
             Expect(TokenCategory.PARENTHESIS_OPEN);
             var exprlist = ExprList();
-            var funcall = new FunCall(){
-                exprlist
-            };
-            
             Expect(TokenCategory.PARENTHESIS_CLOSE);
-            return funcall;
+            return exprlist;
         }
         public Node ExprList(){ //<expr-list> ::= (<expr><expr-list-cont>)? duda: nodo vacio 
             var exprlist = new ExprList();
@@ -466,7 +470,10 @@ namespace Leviathan {
             
             //Expect(TokenCategory.IF);
             Expect(TokenCategory.PARENTHESIS_OPEN);
-            stmtif.Add(Expr());
+            //stmtif.Add(Expr());
+            stmtif.Add(new Condition(){
+                Expr()
+            });
             Expect(TokenCategory.PARENTHESIS_CLOSE);
             Expect(TokenCategory.BRACE_OPEN);
             stmtif.Add(StmtList());
@@ -544,7 +551,10 @@ namespace Leviathan {
             };
             
             Expect(TokenCategory.PARENTHESIS_OPEN);
-            stmtwhile.Add(Expr());
+            //stmtwhile.Add(Expr());
+            stmtwhile.Add(new LoopCondition(){
+                Expr()
+            });
             Expect(TokenCategory.PARENTHESIS_CLOSE);
             Expect(TokenCategory.BRACE_OPEN);
             stmtwhile.Add(StmtList());
@@ -563,7 +573,10 @@ namespace Leviathan {
             Expect(TokenCategory.BRACE_CLOSE);
             Expect(TokenCategory.WHILE); //DUDA 
             Expect(TokenCategory.PARENTHESIS_OPEN);
-            stmtdo.Add(Expr());
+            //stmtdo.Add(Expr());
+            stmtdo.Add(new LoopCondition(){
+                Expr()
+            });
             Expect(TokenCategory.PARENTHESIS_CLOSE);
             Expect(TokenCategory.SEMI_COLON);
 
@@ -586,6 +599,7 @@ namespace Leviathan {
                 AnchorToken = Expect(TokenCategory.RETURN)
             };
             stmtreturn.Add(Expr());
+            Expect(TokenCategory.SEMI_COLON);
             return stmtreturn;
             
             /*Expect(TokenCategory.RETURN);
@@ -823,20 +837,43 @@ namespace Leviathan {
 
             }
         }
+        /*
+        ‹expr-unary› ::= <OP-UNARY> <EXPR-UNARY>|<EXPR-PRIMARY>
+        */
+
         public Node ExprUnary() // ‹expr-unary› ::=  ‹op-unary› * ‹expr-primary›
         {
-            
-            var rootNode = ExprPrimary();
-            while(firstOfOpUnary.Contains(CurrentToken)){
-                //Console.WriteLine("ExprUnary on OPUnary");
-                var node = OpUnary();
-                node.Add(rootNode);
-                rootNode = node;
+            if(firstOfOpUnary.Contains(CurrentToken)){
+                var opunary = OpUnary();
+                var rootNode = ExprUnary();
+                opunary.Add(rootNode);
+                return opunary;
             }
+            return ExprPrimary();
+        }
+
+        /*            
+        public Node ExprUnary() // ‹expr-unary› ::=  ‹op-unary› * ‹expr-primary›
+        {
+            var exprunary = new ExprUnary();
+            
+            //var rootNode = ExprPrimary();
+            while(firstOfOpUnary.Contains(CurrentToken)){
+                //var opunary = OpUnary();
+                Console.WriteLine("ExprUnary on OPUnary");
+                //var node = OpUnary();
+                //node.Add(rootNode);
+                //rootNode = node;
+                exprunary.Add(OpUnary());
+            }
+            //rootNode.Add(ExprPrimary());
+
+            //var expr = ExprPrimary();
+            exprunary.Add(ExprPrimary());
             //Console.WriteLine("ExprUnary");
             
-            return rootNode;
-        }
+            return exprunary;
+        }*/
 
         /*
         public Node ExprUnary() // ‹expr-unary› ::=  ‹op-unary› * ‹expr-primary›
@@ -907,15 +944,28 @@ namespace Leviathan {
 
         public Node ExprPrimaryIdentifier()//error because does not need 
         {
+            /*
             var exprprimaryid = new ExprPrimaryIdentifier(){
                 AnchorToken = Expect(TokenCategory.IDENTIFIER)
+            };
+            */
+            var token = Expect(TokenCategory.IDENTIFIER);
+            var identityNode = new Identifier(){
+                AnchorToken = token
             };
             //Expect(TokenCategory.IDENTIFIER);
             if(CurrentToken==TokenCategory.PARENTHESIS_OPEN){
                 Console.WriteLine("Expr Primary Identifier");
-                exprprimaryid.Add(FunCall());
+                //exprprimaryid.Add(FunCall());
+                var funcall = new FunCall(){
+                    AnchorToken = token
+                };
+                funcall.Add(FunCall());
+                return funcall;
+            } else {
+                return identityNode;
             }
-            return exprprimaryid;
+            //return exprprimaryid;
         }
 
         public Node Array() //<array>::= “[“ <expr-list> “]”
