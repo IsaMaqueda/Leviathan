@@ -31,23 +31,45 @@ namespace Leviathan {
     class SemanticVisitor {
 
         //-----------------------------------------------------------
-        
-        // NO LO NECESITAMOS
         static readonly IDictionary<TokenCategory, Type> typeMapper =
             new Dictionary<TokenCategory, Type>() {
                 { TokenCategory.BOOL, Type.BOOL },
                 { TokenCategory.INT, Type.INT }
             };
 
+        // # TABLAS PARA LA PRIMERA PASADA #########################
         //-----------------------------------------------------------
-        public SymbolTable Table {
+        public SymbolTable gSymbolTable { // global variable table
             get;
             private set;
         }
 
         //-----------------------------------------------------------
+        public FunctionTable functionTable { // global function table
+            get;
+            private set;
+        }
+        // ######################################################
+        //-----------------------------------------------------------
         public SemanticVisitor() {
-            Table = new SymbolTable();
+            // Instantiate & initialize global tables
+            gSymbolTable = new SymbolTable();
+            functionTable = new FunctionTable();
+
+            // Add predefined functions to global function table
+            functionTable["printi"] = new FunctionRow(true, 1, null, Type.VOID);
+            functionTable["printc"] = new FunctionRow(true, 1, null);
+            functionTable["prints"] = new FunctionRow(true, 1, null);
+            functionTable["println"] = new FunctionRow(true, 0, null);
+            functionTable["readi"] = new FunctionRow(true, 0, null);
+            functionTable["reads"] = new FunctionRow(true, 0, null);
+            functionTable["new"] = new FunctionRow(true, 1, null);
+            functionTable["size"] = new FunctionRow(true, 1, null);
+            functionTable["add"] = new FunctionRow(true, 2, null);
+            functionTable["get"] = new FunctionRow(true, 2, null);
+            functionTable["set"] = new FunctionRow(true, 3, null);
+
+
         }
 
         //-----------------------------------------------------------

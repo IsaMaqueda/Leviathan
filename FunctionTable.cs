@@ -34,24 +34,34 @@ using System.Collections.Generic;
 
 namespace Leviathan {
 
-    public class VariablesRow {
+    public class FunctionRow {
+        public bool primitive { get; private set; }
+        public int arity { get; private set; }
+        public SymbolTable reference { get; private set; }
         public Type type { get; private set; }
-        public dynamic varValue { get; private set; }
 
-        public FunctionRow(Type type, dynamic val){
+        public FunctionRow(bool primitive, int arity, SymbolTable localSymbolTable){
+            this.primitive = primitive;
+            this.arity = arity; 
+            this.reference = localSymbolTable;
+        }
+
+        public FunctionRow(bool primitive, int arity, SymbolTable localSymbolTable, Type type){
+            this.primitive = primitive;
+            this.arity = arity; 
+            this.reference = localSymbolTable;
             this.type = type;
-            this.varValue = val;
         }
     }
 
-    public class SymbolTable: IEnumerable<KeyValuePair<string, VariablesRow>> { 
+    public class FunctionTable: IEnumerable<KeyValuePair<string, FunctionRow>> { 
 
-        IDictionary<string, VariablesRow> data = new SortedDictionary<string, VariablesRow>();
+        IDictionary<string, FunctionRow> data = new SortedDictionary<string, FunctionRow>();
 
         //-----------------------------------------------------------
         public override string ToString() {
             var sb = new StringBuilder();
-            sb.Append("Symbol Table\n");
+            sb.Append("Function Table\n");
             sb.Append("====================\n");
             foreach (var entry in data) {
                 sb.Append($"{entry.Key}: {entry.Value}\n");
@@ -61,7 +71,7 @@ namespace Leviathan {
         }
 
         //-----------------------------------------------------------
-        public VariablesRow this[string key] {
+        public FunctionRow this[string key] {
             get {
                 return data[key];
             }
@@ -74,7 +84,7 @@ namespace Leviathan {
             return data.ContainsKey(key);
         }
         //-----------------------------------------------------------
-        public IEnumerator<KeyValuePair<string, VariablesRow>> GetEnumerator() {
+        public IEnumerator<KeyValuePair<string, FunctionRow>> GetEnumerator() {
             return data.GetEnumerator();
         }
         //-----------------------------------------------------------

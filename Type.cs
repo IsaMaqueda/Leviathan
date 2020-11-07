@@ -25,8 +25,8 @@ using System;
 namespace Leviathan {
 
     public enum Type {
-        BOOL, // primitivo
-        INT, // aridad
-        VOID // referencia
+        BOOL,
+        INT,
+        VOID
     }
 }
