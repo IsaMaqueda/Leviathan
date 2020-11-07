@@ -24,11 +24,30 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 
+
+//necesitamos symbol table cuando no tenemos tipo type?
+// necesitamos en donde guardar si varaible es global. lo hacemos aqui?
+//en semantic visitor las funciones regresan un type, si no tenemos type, que es lo que tiene que regresar
+//o si lo unico que hay en type es var o void, por que tenemos el enum. 
+// Function table en lugar de type 
+// necesitamos una Tabla de Variables Globales 
+
 namespace Leviathan {
 
-    public class SymbolTable: IEnumerable<KeyValuePair<string, Type>> {
+    public class SymbolTable: IEnumerable<KeyValuePair<string, Type>> { 
 
-        IDictionary<string, Type> data = new SortedDictionary<string, Type>();
+        struct FunctionTable {
+            public bool primitive { get; set; }
+            public int arity { get; set; }
+            public void reference { get; set; }
+
+            public FunctionTable(bool a, int arity){
+                this.primitive = a;
+                this.arity = arity; 
+            }
+        }
+
+        IDictionary<string, FunctionTable> data = new SortedDictionary<string, FunctionTable>();
 
         //-----------------------------------------------------------
         public override string ToString() {
@@ -64,4 +83,5 @@ namespace Leviathan {
             throw new NotImplementedException();
         }
     }
+
 }

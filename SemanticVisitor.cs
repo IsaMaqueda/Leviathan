@@ -20,6 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//si cambiamos el IDdictionary, podriamos cambiar las categorias a los types que queremos?
+// exp Node. nfjsd , Type.Primitive?
+
 using System;
 using System.Collections.Generic;
 
@@ -28,6 +31,8 @@ namespace Leviathan {
     class SemanticVisitor {
 
         //-----------------------------------------------------------
+        
+        // NO LO NECESITAMOS
         static readonly IDictionary<TokenCategory, Type> typeMapper =
             new Dictionary<TokenCategory, Type>() {
                 { TokenCategory.BOOL, Type.BOOL },
