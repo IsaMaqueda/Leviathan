@@ -1,9 +1,9 @@
 /*
-    Levithan Compiler - AST construction
-    
-    Camila Rovirosa A01024192
-    Eduardo Badillo A01020716
-    Isabel Maqueda  A01652906
+    Levithan Compiler - Semantic Analysis
+
+  Camila Rovirosa A010241927
+  Eduardo Badillo A01020716
+  Isabel Maqueda  A01652906
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
 
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 using System;

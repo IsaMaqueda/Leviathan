@@ -1,6 +1,6 @@
 /*
-  Leviathan compiler - Specific node subclasses for the AST (Abstract
-  Syntax Tree).
+  Leviathan compiler - Semantic Analysis
+  Specific node subclasses for the AST (Abstract Syntax Tree).
   
   Camila Rovirosa A010241927
   Eduardo Badillo A01020716
@@ -73,11 +73,4 @@ namespace Leviathan {
     class Char_Literal : Node {}
     class String_Literal : Node {}
     
-
-
-
-
-
-
-
 }

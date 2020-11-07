@@ -1,5 +1,6 @@
 /*
-  Levithan Compiler - AST construction - Parent Node class for the AST (Abstract Syntax Tree).
+  Levithan Compiler - Semantic Analysis - 
+  Parent Node class for the AST (Abstract Syntax Tree).
 
   Camila Rovirosa A010241927
   Eduardo Badillo A01020716

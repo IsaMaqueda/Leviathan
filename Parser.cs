@@ -1,5 +1,5 @@
 /*
-  Leviathan compiler - AST construction
+  Leviathan compiler - Semantic Analysis
 
   Camila Rovirosa A01024192
   Eduardo Badillo A01020716
@@ -224,7 +224,7 @@ namespace Leviathan {
         
         public Node FunDef() //<fun def> :: = <id> “(“ <param-list> “)” “{“ <var-def-list><stmt-list> ”}”
         { //DUDA
-            Console.WriteLine("Entre a FunDef");
+            //Console.WriteLine("Entre a FunDef");
             var defToken = Expect(TokenCategory.IDENTIFIER);
             Expect(TokenCategory.PARENTHESIS_OPEN);
 
@@ -364,7 +364,7 @@ namespace Leviathan {
         
         public Node StmtAssign(Token token) //<stmt-assign>::=<id>”=”<expr>”;”
         { 
-            Console.WriteLine("StmtAssign");
+            //Console.WriteLine("StmtAssign");
             var stmtassign = new StmtAssign(){
                 AnchorToken = token
             };
@@ -411,7 +411,7 @@ namespace Leviathan {
             return stmtfuncall;
         }
         public Node FunCall(){ //‹fun-call› :: = ‹id› “(“ ‹expr-list› “)”
-            Console.WriteLine("FunCall");
+            //Console.WriteLine("FunCall");
             Expect(TokenCategory.PARENTHESIS_OPEN);
             var exprlist = ExprList();
             Expect(TokenCategory.PARENTHESIS_CLOSE);
@@ -955,7 +955,7 @@ namespace Leviathan {
             };
             //Expect(TokenCategory.IDENTIFIER);
             if(CurrentToken==TokenCategory.PARENTHESIS_OPEN){
-                Console.WriteLine("Expr Primary Identifier");
+                //Console.WriteLine("Expr Primary Identifier");
                 //exprprimaryid.Add(FunCall());
                 var funcall = new FunCall(){
                     AnchorToken = token
