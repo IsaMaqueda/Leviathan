@@ -19,10 +19,13 @@
 #
 
 leviathan.exe: Driver.cs Scanner.cs Token.cs TokenCategory.cs Parser.cs \
-	SyntaxError.cs Node.cs SpecificNodes.cs
+	SyntaxError.cs Node.cs SpecificNodes.cs SemanticVisitor.cs \
+	SemanticError.cs FunctionTable.cs
 
 	mcs -out:leviathan.exe Driver.cs Scanner.cs Token.cs TokenCategory.cs \
-	Parser.cs SyntaxError.cs Node.cs SpecificNodes.cs
+	Parser.cs SyntaxError.cs Node.cs SpecificNodes.cs SemanticVisitor.cs \
+	SemanticError.cs FunctionTable.cs
+
 
 clean:
 	rm leviathan.exe
