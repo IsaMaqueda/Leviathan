@@ -24,41 +24,34 @@
 // exp Node. nfjsd , Type.Primitive?
 
 using System;
+using System.Text;
 using System.Collections.Generic;
 
 namespace Leviathan {
 
-    class SemanticVisitor {
+    // Singleton Design Pattern
+    public class Globales{
 
-        //-----------------------------------------------------------
-        static readonly IDictionary<TokenCategory, Type> typeMapper =
-            new Dictionary<TokenCategory, Type>() {
-                { TokenCategory.BOOL, Type.BOOL },
-                { TokenCategory.INT, Type.INT }
-            };
+        // Create instance of itself
+        private static Globales instance = new Globales();
 
-        // # TABLAS PARA LA PRIMERA PASADA #########################
-        //-----------------------------------------------------------
-        public SymbolTable gSymbolTable { // global variable table
-            get;
-            private set;
-        }
+        public static HashSet<string> globalVariables = new HashSet<string>();
         
-        // set para variables globales
-        HashSet<string> globalVariables = new HashSet<string>();
+        public HashSet<string> getGlobalVariables(){
+            return globalVariables;
+        }
 
-        //-----------------------------------------------------------
-        public FunctionTable functionTable { // global function table
+
+        private static FunctionTable functionTable{
             get;
             private set;
         }
-        // ######################################################
-        //-----------------------------------------------------------
-        public SemanticVisitor() {
-            // Instantiate & initialize global tables
+
+        // Private constructor
+        private Globales(){
             functionTable = new FunctionTable();
 
-            // Add predefined functions to global function table
+
             functionTable["printi"] = new FunctionRow(true, 1, null);
             functionTable["printc"] = new FunctionRow(true, 1, null);
             functionTable["prints"] = new FunctionRow(true, 1, null);
@@ -70,14 +63,69 @@ namespace Leviathan {
             functionTable["add"] = new FunctionRow(true, 2, null);
             functionTable["get"] = new FunctionRow(true, 2, null);
             functionTable["set"] = new FunctionRow(true, 3, null);
-
-
         }
+
+        // Return with a getter the only object available
+        public static Globales getInstance(){
+            return instance;
+        }
+        
+
+        public static FunctionTable functionTable = new FunctionTable();
+
+        public static Globales getTable(){
+            return functionTable;
+        }
+
+    }
+
+    class SemanticVisitor {
+
+        // set para variables globales
+        
+        //Tablas para la primera pasada
+        
+
+        
+        public SemanticVisitor() {
+            // Instantiate & initialize global tables
+            //Globales.functionTable = new FunctionTable();
+
+            // Add predefined functions to global function table
+            /*
+            Globales.functionTable["printi"] = new FunctionRow(true, 1, null);
+            Globales.functionTable["printc"] = new FunctionRow(true, 1, null);
+            Globales.functionTable["prints"] = new FunctionRow(true, 1, null);
+            Globales.functionTable["println"] = new FunctionRow(true, 0, null);
+            Globales.functionTable["readi"] = new FunctionRow(true, 0, null);
+            Globales.functionTable["reads"] = new FunctionRow(true, 0, null);
+            Globales.functionTable["new"] = new FunctionRow(true, 1, null);
+            Globales.functionTable["size"] = new FunctionRow(true, 1, null);
+            Globales.functionTable["add"] = new FunctionRow(true, 2, null);
+            Globales.functionTable["get"] = new FunctionRow(true, 2, null);
+            Globales.functionTable["set"] = new FunctionRow(true, 3, null);
+            */
+        }
+        
+        
+
+        public override string ToString() {
+            var sb = new StringBuilder();
+            sb.Append("Global Variables\n");
+            sb.Append("====================\n");
+            foreach (var entry in Globales.globalVariables) {
+                sb.Append($"{entry}\n");
+            }
+            sb.Append("====================\n");
+            return sb.ToString();
+        }
+
+        //-----------------------------------------------------------
+                  
 
         //-----------------------------------------------------------
         public void Visit(Program node) {
             Visit((dynamic) node[0]); // def-list
-            //Visit((dynamic) node[1]);
         }
 
 
@@ -88,26 +136,25 @@ namespace Leviathan {
         public void Visit(FunDef node) { //<fun-def> :: = <id> “(“ <id-list>? “)” “{“ <var-def-list><stmt-list> ”}”
             
             var funName = node.AnchorToken.Lexeme;
-            if(functionTable.Contains(funName)){
+            if(Globales.functionTable.Contains(funName)){
                 throw new SemanticError(
                     "Duplicated function: " + funName,
                     node.AnchorToken);
             } else {
-                var numParams = Visit(node[0]);
-                functionTable[funName] = new FunctionRow(false, numParams, null);
+                var numParams = Visit((dynamic)node[0]);
+                Globales.functionTable[funName] = new FunctionRow(false, numParams, null);
+                
             }
-            //Visit((dynamic) node[0]); // param-list (id-list)? DUDA
-            //Visit((dynamic) node[1]); // var-def-list
-            //Visit((dynamic) node[2]); // stmt-list
-            VisitChildren(node);
+            
         }
 
         public void Visit(VarDef node){
-            Visit(node[0]);
+            Visit((dynamic) node[0]);
         }
 
         public int Visit(ParamList node){
             var sonCtr = 0;
+            
             foreach (var n in node){
                 sonCtr++;
             }
@@ -133,12 +180,12 @@ namespace Leviathan {
         public void Visit(Identifier node){
             var varName = node.AnchorToken.Lexeme;
 
-            if (globalVariables.Contains(varName)) {
+            if (Globales.globalVariables.Contains(varName)) {
                 throw new SemanticError(
                     "Duplicated variable: " + varName,
                     node.AnchorToken);
             } else {
-                globalVariables.Add(varName);
+                Globales.globalVariables.Add(varName);
             }
         }
         
@@ -147,169 +194,89 @@ namespace Leviathan {
                 Visit((dynamic) n);
             }
         }
-        /*
-        //-----------------------------------------------------------
-        public Type Visit(DeclarationList node) {
-            VisitChildren(node);
-            return Type.VOID;
+    }
+    /*
+    class SemanticVisitor2 {
+        
+        public void Visit(Program node) {
+            Visit((dynamic) node[0]); // def-list
+            //Visit((dynamic) node[1]);
+            
         }
 
-        //-----------------------------------------------------------
-        public Type Visit(Declaration node) {
+        public void Visit(DefList node) {
+            VisitChildren(node); // def-list ::=  <def>* //def ::= <var-def>|<fun-def>
+        }
 
-            var variableName = node[0].AnchorToken.Lexeme;
+        public void Visit(FunDef node) { //<fun-def> :: = <id> “(“ <id-list>? “)” “{“ <var-def-list><stmt-list> ”}”
+            
+            //public HashSet<string> globalVariables = new HashSet<string>();
+            var funName = node.AnchorToken.Lexeme;
 
-            if (Table.Contains(variableName)) {
-                throw new SemanticError(
-                    "Duplicated variable: " + variableName,
-                    node[0].AnchorToken);
+            functionTable[funName].reference = new HashSet<string>();
 
-            } else {
-                Table[variableName] =
-                    typeMapper[node.AnchorToken.Category];
+            //Visit((dynamic) node[0]); // param-list (id-list)? DUDA
+            Visit((dynamic) node[1], funName); // var-def-list
+            Visit((dynamic) node[2], funName); // stmt-list             
+        }
+
+        public void Visit(VarDeflist node, string fName){
+            Visit((dynamic) node[0], fName);
+        }
+        
+        public void Visit(IdList node, string fName){
+            foreach (var n in node) {
+                Visit((dynamic) n, fName);
+            }
+            //VisitChildren(node);
+        }
+
+        public void Visit(Identifier node, string fName){
+            functionTable[fName].reference.Add(node.AnchorToken.Lexeme);
+        }
+
+        public void Visit(StmtList node, string fName){
+            foreach (var n in node) {
+                Visit((dynamic) n, fName);
+            }
+        }
+
+        public void Visit(StmtAssign node, string fName){ // <stmt-assign>::=<id>”=”<expr>”;”
+            var varName = node.AnchorToken.Lexeme;
+            functionTable[fName].reference.Add(varName);
+            // TODO: visit sons, it can be any Lit node
+            Visit((dynamic) node[0]); // expr
+        }
+
+        public void Visit(Int_Literal node){ 
+            var catchVal = node.AnchorToken.Lexeme;
+        }
+
+        public void Visit(Char_Literal node){ 
+            var catchVal = node.AnchorToken.Lexeme;
+        }
+
+        public void Visit(String_Literal node){ 
+            var catchVal = node.AnchorToken.Lexeme;
+        }
+
+        public void Visit(Neg node){
+
+        }
+
+        public void Visit(ExprList node, string fName){
+            foreach (var n in node) {
+                Visit((dynamic) n, fName);
             }
 
-            return Type.VOID;
         }
 
-        //-----------------------------------------------------------
-        public Type Visit(StatementList node) {
-            VisitChildren(node);
-            return Type.VOID;
-        }
 
-        //-----------------------------------------------------------
-        public Type Visit(Assignment node) {
-
-            var variableName = node.AnchorToken.Lexeme;
-
-            if (Table.Contains(variableName)) {
-
-                var expectedType = Table[variableName];
-
-                if (expectedType != Visit((dynamic) node[0])) {
-                    throw new SemanticError(
-                        "Expecting type " + expectedType
-                        + " in assignment statement",
-                        node.AnchorToken);
-                }
-
-            } else {
-                throw new SemanticError(
-                    "Undeclared variable: " + variableName,
-                    node.AnchorToken);
-            }
-
-            return Type.VOID;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(Print node) {
-            node.ExpressionType = Visit((dynamic) node[0]);
-            return Type.VOID;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(If node) {
-            if (Visit((dynamic) node[0]) != Type.BOOL) {
-                throw new SemanticError(
-                    $"Expecting type {Type.BOOL} in conditional statement",
-                    node.AnchorToken);
-            }
-            VisitChildren(node[1]);
-            return Type.VOID;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(Identifier node) {
-
-            var variableName = node.AnchorToken.Lexeme;
-
-            if (Table.Contains(variableName)) {
-                return Table[variableName];
-            }
-
-            throw new SemanticError(
-                $"Undeclared variable: {variableName}",
-                node.AnchorToken);
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(IntLiteral node) {
-
-            var intStr = node.AnchorToken.Lexeme;
-            int value;
-
-            if (!Int32.TryParse(intStr, out value)) {
-                throw new SemanticError(
-                    $"Integer literal too large: {intStr}",
-                    node.AnchorToken);
-            }
-
-            return Type.INT;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(True node) {
-            return Type.BOOL;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(False node) {
-            return Type.BOOL;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(Neg node) {
-            if (Visit((dynamic) node[0]) != Type.INT) {
-                throw new SemanticError(
-                    $"Operator - requires an operand of type {Type.INT}",
-                    node.AnchorToken);
-            }
-            return Type.INT;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(And node) {
-            VisitBinaryOperator('&', node, Type.BOOL);
-            return Type.BOOL;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(Less node) {
-            VisitBinaryOperator('<', node, Type.INT);
-            return Type.BOOL;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(Plus node) {
-            VisitBinaryOperator('+', node, Type.INT);
-            return Type.INT;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(Mul node) {
-            VisitBinaryOperator('*', node, Type.INT);
-            return Type.INT;
-        }
-
-        //-----------------------------------------------------------
         void VisitChildren(Node node) {
             foreach (var n in node) {
                 Visit((dynamic) n);
             }
         }
-
-        //-----------------------------------------------------------
-        void VisitBinaryOperator(char op, Node node, Type type) {
-            if (Visit((dynamic) node[0]) != type ||
-                Visit((dynamic) node[1]) != type) {
-                throw new SemanticError(
-                    $"Operator {op} requires two operands of type {type}",
-                    node.AnchorToken);
-            }
-        }
-
-        */
-    }
+    }*/
+    
 }

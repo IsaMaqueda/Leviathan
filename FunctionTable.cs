@@ -24,11 +24,6 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 
-
-//necesitamos symbol table cuando no tenemos tipo type?
-// necesitamos en donde guardar si varaible es global. lo hacemos aqui?
-//en semantic visitor las funciones regresan un type, si no tenemos type, que es lo que tiene que regresar
-//o si lo unico que hay en type es var o void, por que tenemos el enum. 
 // Function table en lugar de type 
 // necesitamos una Tabla de Variables Globales 
 
@@ -37,9 +32,9 @@ namespace Leviathan {
     public class FunctionRow {
         public bool primitive { get; private set; }
         public int arity { get; private set; }
-        public HashSet reference { get; private set; }
+        public HashSet<string> reference { get; set; }
 
-        public FunctionRow(bool primitive, int arity, HashSet localSymbolTable){
+        public FunctionRow(bool primitive, int arity, HashSet<string> localSymbolTable){
             this.primitive = primitive;
             this.arity = arity; 
             this.reference = localSymbolTable;
@@ -48,7 +43,7 @@ namespace Leviathan {
         public override string ToString(){
             var localVarTable = "";
             // TODO: Append local var table
-            return $"{this.primitive}, {this.arity} \n{localVarTable}";
+            return $"{this.primitive}, {this.arity} {localVarTable}";
 
         }
     }

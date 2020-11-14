@@ -69,30 +69,32 @@ namespace Leviathan {
             try {
                 var inputPath = args[0];
                 var input = File.ReadAllText(inputPath);
-                /*Console.WriteLine(String.Format(
-                    "===== Tokens from: \"{0}\" =====", inputPath)
-                );
-                var count = 1;
-                foreach (var tok in new Scanner(input).Start()) {
-                    Console.WriteLine(String.Format("[{0}] {1}",
-                                                    count++, tok)
-                    );*/
-
+            
                 var parser = new Parser(new Scanner(input).Start().GetEnumerator());
                 var program = parser.Program();
                 Console.WriteLine("Syntax OK.");
                 //Console.Write(program.ToStringTree());
 
                 var semantic = new SemanticVisitor();
+                var globales = new Globales();
+
                 semantic.Visit((dynamic) program);
 
                 Console.WriteLine("Semantics OK.");
                 Console.WriteLine();
-                Console.WriteLine("Symbol Table");
+                Console.WriteLine("Function Table");
                 Console.WriteLine("============");
-                foreach (var entry in semantic.Table) {
+                foreach (var entry in globales.functionTable) {
                     Console.WriteLine(entry);
                 }
+                Console.WriteLine();
+                Console.WriteLine("Global Variables");
+                Console.WriteLine("============");
+                foreach (var entry in globales.globalVariables)
+                {
+                    Console.WriteLine(entry); 
+                }
+                Console.WriteLine();
 
             } catch (Exception e) {
 
