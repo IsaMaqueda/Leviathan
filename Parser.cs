@@ -232,7 +232,19 @@ namespace Leviathan {
             var paramlist = new ParamList();
             if(CurrentToken == TokenCategory.IDENTIFIER)
             {
-                paramlist.Add(IdList());
+                //paramlist.Add(IdList());
+                paramlist.Add(new Identifier(){
+                    AnchorToken = Expect(TokenCategory.IDENTIFIER)
+                });
+
+                while (CurrentToken == TokenCategory.COMMA)
+                {
+                    Expect(TokenCategory.COMMA);
+                    paramlist.Add(new Identifier(){
+                        AnchorToken = Expect(TokenCategory.IDENTIFIER)
+                    });
+                }
+
             }
             ///
 

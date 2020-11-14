@@ -43,6 +43,9 @@ namespace Leviathan {
             get;
             private set;
         }
+        
+        // set para variables globales
+        HashSet<string> globalVariables = new HashSet<string>();
 
         //-----------------------------------------------------------
         public FunctionTable functionTable { // global function table
@@ -53,11 +56,10 @@ namespace Leviathan {
         //-----------------------------------------------------------
         public SemanticVisitor() {
             // Instantiate & initialize global tables
-            gSymbolTable = new SymbolTable();
             functionTable = new FunctionTable();
 
             // Add predefined functions to global function table
-            functionTable["printi"] = new FunctionRow(true, 1, null, Type.VOID);
+            functionTable["printi"] = new FunctionRow(true, 1, null);
             functionTable["printc"] = new FunctionRow(true, 1, null);
             functionTable["prints"] = new FunctionRow(true, 1, null);
             functionTable["println"] = new FunctionRow(true, 0, null);
@@ -73,12 +75,79 @@ namespace Leviathan {
         }
 
         //-----------------------------------------------------------
-        public Type Visit(Program node) {
-            Visit((dynamic) node[0]);
-            Visit((dynamic) node[1]);
-            return Type.VOID;
+        public void Visit(Program node) {
+            Visit((dynamic) node[0]); // def-list
+            //Visit((dynamic) node[1]);
         }
 
+
+        public void Visit(DefList node) {
+            VisitChildren(node); // def-list ::=  <def>* //def ::= <var-def>|<fun-def>
+        }
+
+        public void Visit(FunDef node) { //<fun-def> :: = <id> “(“ <id-list>? “)” “{“ <var-def-list><stmt-list> ”}”
+            
+            var funName = node.AnchorToken.Lexeme;
+            if(functionTable.Contains(funName)){
+                throw new SemanticError(
+                    "Duplicated function: " + funName,
+                    node.AnchorToken);
+            } else {
+                var numParams = Visit(node[0]);
+                functionTable[funName] = new FunctionRow(false, numParams, null);
+            }
+            //Visit((dynamic) node[0]); // param-list (id-list)? DUDA
+            //Visit((dynamic) node[1]); // var-def-list
+            //Visit((dynamic) node[2]); // stmt-list
+            VisitChildren(node);
+        }
+
+        public void Visit(VarDef node){
+            Visit(node[0]);
+        }
+
+        public int Visit(ParamList node){
+            var sonCtr = 0;
+            foreach (var n in node){
+                sonCtr++;
+            }
+            return sonCtr;
+        }
+        /*
+        public void Visit(VarDefList node){
+            VisitChildren(node);
+        }
+
+        public void Visit(StmtList node){
+            VisitChildren(node);
+        }
+
+        public void Visit(VarDef node) { //<var-def> :: = “var” <id-list> “;”
+            Visit((dynamic) node[0]); // IdList
+        }
+        */
+        public void Visit(IdList node) { //<id-list> ::= <id> (“,” <id>)*
+            VisitChildren(node); // Identifiers*
+        }
+
+        public void Visit(Identifier node){
+            var varName = node.AnchorToken.Lexeme;
+
+            if (globalVariables.Contains(varName)) {
+                throw new SemanticError(
+                    "Duplicated variable: " + varName,
+                    node.AnchorToken);
+            } else {
+                globalVariables.Add(varName);
+            }
+        }
+        
+        void VisitChildren(Node node) {
+            foreach (var n in node) {
+                Visit((dynamic) n);
+            }
+        }
+        /*
         //-----------------------------------------------------------
         public Type Visit(DeclarationList node) {
             VisitChildren(node);
@@ -240,5 +309,7 @@ namespace Leviathan {
                     node.AnchorToken);
             }
         }
+
+        */
     }
 }

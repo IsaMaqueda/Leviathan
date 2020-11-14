@@ -37,20 +37,19 @@ namespace Leviathan {
     public class FunctionRow {
         public bool primitive { get; private set; }
         public int arity { get; private set; }
-        public SymbolTable reference { get; private set; }
-        public Type type { get; private set; }
+        public HashSet reference { get; private set; }
 
-        public FunctionRow(bool primitive, int arity, SymbolTable localSymbolTable){
+        public FunctionRow(bool primitive, int arity, HashSet localSymbolTable){
             this.primitive = primitive;
             this.arity = arity; 
             this.reference = localSymbolTable;
         }
 
-        public FunctionRow(bool primitive, int arity, SymbolTable localSymbolTable, Type type){
-            this.primitive = primitive;
-            this.arity = arity; 
-            this.reference = localSymbolTable;
-            this.type = type;
+        public override string ToString(){
+            var localVarTable = "";
+            // TODO: Append local var table
+            return $"{this.primitive}, {this.arity} \n{localVarTable}";
+
         }
     }
 
