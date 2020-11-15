@@ -76,7 +76,7 @@ namespace Leviathan {
                 //Console.Write(program.ToStringTree());
 
                 var semantic = new SemanticVisitor();
-                var globales = new Globales();
+                Globales globales = Globales.getInstance();
 
                 semantic.Visit((dynamic) program);
 
@@ -84,15 +84,15 @@ namespace Leviathan {
                 Console.WriteLine();
                 Console.WriteLine("Function Table");
                 Console.WriteLine("============");
-                foreach (var entry in globales.functionTable) {
+                foreach (var entry in globales.getGlobalFunctions()) {
                     Console.WriteLine(entry);
                 }
                 Console.WriteLine();
                 Console.WriteLine("Global Variables");
                 Console.WriteLine("============");
-                foreach (var entry in globales.globalVariables)
+                foreach (var entry in globales.getGlobalVariables())
                 {
-                    Console.WriteLine(entry); 
+                        Console.WriteLine(entry); 
                 }
                 Console.WriteLine();
 
