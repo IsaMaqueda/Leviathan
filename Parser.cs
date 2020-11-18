@@ -125,7 +125,10 @@ namespace Leviathan {
         { 
           var prog = new Program();
           prog.Add(DefList());
-          Expect(TokenCategory.EOF);
+          var eof = new EOF(){
+              AnchorToken = Expect(TokenCategory.EOF)
+          };
+          prog.Add(eof);
           return prog;
         }
         
@@ -161,11 +164,29 @@ namespace Leviathan {
             };
             
             
-            vardef.Add(IdList());   
+            vardef.Add(IdDefList());   
             Expect(TokenCategory.SEMI_COLON);
 
             return vardef;
         
+        }
+
+        public Node IdDefList(){
+            var firstIdToken = Expect(TokenCategory.IDENTIFIER);
+            var idDefList = new IdDefList(){
+                new NewIdentifier(){
+                    AnchorToken = firstIdToken
+                }
+            };
+
+            while (CurrentToken == TokenCategory.COMMA)
+            {
+                Expect(TokenCategory.COMMA);
+                idDefList.Add(new NewIdentifier(){
+                    AnchorToken = Expect(TokenCategory.IDENTIFIER)
+                });
+            }
+            return idDefList;
         }
 
         
@@ -199,14 +220,14 @@ namespace Leviathan {
             var paramlist = new ParamList();
             if(CurrentToken == TokenCategory.IDENTIFIER)
             {
-                paramlist.Add(new Identifier(){
+                paramlist.Add(new NewIdentifier(){
                     AnchorToken = Expect(TokenCategory.IDENTIFIER)
                 });
 
                 while (CurrentToken == TokenCategory.COMMA)
                 {
                     Expect(TokenCategory.COMMA);
-                    paramlist.Add(new Identifier(){
+                    paramlist.Add(new NewIdentifier(){
                         AnchorToken = Expect(TokenCategory.IDENTIFIER)
                     });
                 }
@@ -342,7 +363,7 @@ namespace Leviathan {
             return stmtdecr;
         }
 
-        public Node StmtFunCall(Token token) //<stm-fun-call>::=<fun-call>”;” No es nodo
+        public Node StmtFunCall(Token token) //<stm-fun-call>::=<fun-call>”;” 
         {
             var stmtfuncall = new StmtFunCall(){
                 AnchorToken = token
@@ -365,8 +386,6 @@ namespace Leviathan {
             {
                 //var expr1 = Expr();
                 exprlist.Add(Expr());
-
-               
 
                 while(CurrentToken == TokenCategory.COMMA)
                 {
@@ -619,9 +638,7 @@ namespace Leviathan {
                 initExpr = expr2;
             }
             return initExpr;
-            
         }
-
 
         public Node OpAdd() // <op-add>::= “+” | “-”
         {

@@ -88,6 +88,7 @@ namespace Leviathan {
                     Console.WriteLine(entry);
                 }
                 Console.WriteLine();
+
                 Console.WriteLine("Global Variables");
                 Console.WriteLine("============");
                 foreach (var entry in globales.getGlobalVariables())
@@ -95,6 +96,19 @@ namespace Leviathan {
                         Console.WriteLine(entry); 
                 }
                 Console.WriteLine();
+
+                var parser2 = new Parser(new Scanner(input).Start().GetEnumerator());
+                var program2 = parser2.Program();
+                var semantic2 = new SemanticVisitor2();
+                semantic2.Visit((dynamic) program2);
+
+                Console.WriteLine("Function Table with Variables");
+                Console.WriteLine("============");
+                foreach (var entry in globales.getGlobalFunctions()) {
+                    Console.WriteLine(entry);
+                }
+                Console.WriteLine();
+
 
             } catch (Exception e) {
 

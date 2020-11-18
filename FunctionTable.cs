@@ -31,21 +31,56 @@ namespace Leviathan {
 
     public class FunctionRow {
         public bool primitive { get; private set; }
-        public int arity { get; private set; }
+        public int arity;
         public HashSet<string> reference { get; set; }
 
-        public FunctionRow(bool primitive, int arity, HashSet<string> localSymbolTable){
+        //reference = new HashSet<string>();
+        
+        public FunctionRow(bool primitive, int arity){
             this.primitive = primitive;
             this.arity = arity; 
-            this.reference = localSymbolTable;
+            this.reference = new HashSet<string>();
+        }
+        public void setReference(string variable){
+            this.reference.Add(variable);
+        }
+
+        public int getArity(){
+            return this.arity;
+        }
+        
+        
+        public HashSet<string> getReference(){
+            return this.reference;
         }
 
         public override string ToString(){
             var localVarTable = "";
-            // TODO: Append local var table
-            return $"{this.primitive}, {this.arity} {localVarTable}";
 
+            if(this.reference.Count >0){
+                foreach(var x in this.reference){
+                    localVarTable += x + ", ";
+                }
+                
+                return $"{this.primitive}, {this.arity},  \n   Local Variables : {localVarTable}";
+            } else {
+                return $"{this.primitive}, {this.arity}";
+            }
         }
+        /*
+        public override string ToString(){
+            var sb = new StringBuilder();
+            var localVarTable = "";
+            // TODO: Append local var table
+            
+            foreach(var x in reference){
+                localVarTable += x + " ";
+            }
+
+            var returnString = $"{this.primitive}, {this.arity}, local variable table {localVarTable}";
+            return returnString;
+
+        }*/
     }
 
     public class FunctionTable: IEnumerable<KeyValuePair<string, FunctionRow>> { 

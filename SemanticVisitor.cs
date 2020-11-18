@@ -1,9 +1,11 @@
 /*
  Levithan Compiler - Semantic Analysis - 
   Semantic analyzer
+
   Camila Rovirosa A010241927
   Eduardo Badillo A01020716
   Isabel Maqueda  A01652906
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -47,26 +49,40 @@ namespace Leviathan {
             return functionTable;
         }
 
-        public void setFunctionTable(string name, bool primitive, int arity, HashSet<string> localSymbolTable){
-            functionTable[name] = new FunctionRow(primitive, arity, localSymbolTable);
+        public HashSet<string> getFunctionReference(string fName){
+            return functionTable[fName].getReference();
         }
+
+        public void setFunctionTable(string name, bool primitive, int arity){
+            functionTable[name] = new FunctionRow(primitive, arity);
+            //functionTable[name].reference = new HashSet<string>();
+        }
+
+        public void addLocalVariable(string name, string variable){
+            functionTable[name].setReference(variable);
+        }
+
+        public int getFunctionArity(string name)
+        {
+            return functionTable[name].arity;
+        }
+        
 
         // Private constructor
         private Globales(){
             functionTable = new FunctionTable();
 
-
-            functionTable["printi"] = new FunctionRow(true, 1, null);
-            functionTable["printc"] = new FunctionRow(true, 1, null);
-            functionTable["prints"] = new FunctionRow(true, 1, null);
-            functionTable["println"] = new FunctionRow(true, 0, null);
-            functionTable["readi"] = new FunctionRow(true, 0, null);
-            functionTable["reads"] = new FunctionRow(true, 0, null);
-            functionTable["new"] = new FunctionRow(true, 1, null);
-            functionTable["size"] = new FunctionRow(true, 1, null);
-            functionTable["add"] = new FunctionRow(true, 2, null);
-            functionTable["get"] = new FunctionRow(true, 2, null);
-            functionTable["set"] = new FunctionRow(true, 3, null);
+            functionTable["printi"] = new FunctionRow(true, 1);
+            functionTable["printc"] = new FunctionRow(true, 1);
+            functionTable["prints"] = new FunctionRow(true, 1);
+            functionTable["println"] = new FunctionRow(true, 0);
+            functionTable["readi"] = new FunctionRow(true, 0);
+            functionTable["reads"] = new FunctionRow(true, 0);
+            functionTable["new"] = new FunctionRow(true, 1);
+            functionTable["size"] = new FunctionRow(true, 1);
+            functionTable["add"] = new FunctionRow(true, 2);
+            functionTable["get"] = new FunctionRow(true, 2);
+            functionTable["set"] = new FunctionRow(true, 3);
             
         }
 
@@ -97,32 +113,21 @@ namespace Leviathan {
             
             tables = Globales.getInstance();
         }
-
-        public override string ToString() {
-            var sb = new StringBuilder();
-            sb.Append("Global Variables\n");
-            sb.Append("====================\n");
-            foreach (var entry in tables.getGlobalVariables()) {
-                sb.Append($"{entry}\n");
-            }
-            sb.Append("====================\n");
-            return sb.ToString();
-        }
-
+        
         //-----------------------------------------------------------
                   
 
         //-----------------------------------------------------------
         public void Visit(Program node) {
-            Visit((dynamic) node[0]); // def-list
+            VisitChildren((dynamic) node); // son : DefList
         }
 
 
         public void Visit(DefList node) {
-            VisitChildren(node); // def-list ::=  <def>* //def ::= <var-def>|<fun-def>
+            VisitChildren(node); // sons : (FunDef | VarDef)*
         }
 
-        public void Visit(FunDef node) { //<fun-def> :: = <id> “(“ <id-list>? “)” “{“ <var-def-list><stmt-list> ”}”
+        public void Visit(FunDef node) { // visited sons :   
         
             var funName = node.AnchorToken.Lexeme;
             if(tables.getGlobalFunctions().Contains(funName)){
@@ -131,15 +136,32 @@ namespace Leviathan {
                     node.AnchorToken);
             } else {
                 var numParams = Visit((dynamic)node[0]);
-                tables.setFunctionTable(funName, false, numParams, null);
-                //Globales.functionTable[funName] = new FunctionRow(false, numParams, null);
                 
+                tables.setFunctionTable(funName, false, numParams);
+                //Globales.functionTable[funName] = new FunctionRow(false, numParams, null);
             }
             
         }
 
         public void Visit(VarDef node){
-            Visit((dynamic) node[0]);
+            Visit((dynamic) node[0]); // son : IdDefList
+        }
+
+        public void Visit(IdDefList node){
+            VisitChildren(node); // NewIdentifiers*
+        }
+
+        public void Visit(NewIdentifier node){ // no sons
+            var varName = node.AnchorToken.Lexeme;
+
+            if (tables.getGlobalVariables().Contains(varName) ) {
+                throw new SemanticError(
+                    "Duplicated variable: " + varName,
+                    node.AnchorToken);
+            } else {
+                tables.setGlobalVariables(varName);
+                //Globales.globalVariables.Add(varName);
+            }
         }
 
         public int Visit(ParamList node){
@@ -151,23 +173,16 @@ namespace Leviathan {
             return sonCtr;
         }
 
-        public void Visit(IdList node) { //<id-list> ::= <id> (“,” <id>)*
-            VisitChildren(node); // Identifiers*
-        }
-
-        public void Visit(Identifier node){
-            var varName = node.AnchorToken.Lexeme;
-
-            if (tables.getGlobalVariables().Contains(varName)) {
-                throw new SemanticError(
-                    "Duplicated variable: " + varName,
-                    node.AnchorToken);
+        public void Visit(EOF node){
+            if(tables.getGlobalFunctions().Contains("main")){
+                // all good 
             } else {
-                tables.setGlobalVariables(varName);
-                //Globales.globalVariables.Add(varName);
+                throw new SemanticError(
+                    "Reached end of file, no main function was declared.",
+                    node.AnchorToken);
             }
         }
-        
+
         void VisitChildren(Node node) {
             foreach (var n in node) {
                 Visit((dynamic) n);
@@ -177,7 +192,9 @@ namespace Leviathan {
     
     class SemanticVisitor2 {
 
-
+        //bool inLoop = false; // considerar como un entero
+        public int inLoop = 0;
+        string funCallName;
         // set para variables globales
         private Globales tables;
         //Tablas para la primera pasada
@@ -189,79 +206,102 @@ namespace Leviathan {
             
             tables = Globales.getInstance();
         }
-        
+
         public void Visit(Program node) {
-            Visit((dynamic) node[0]); // def-list
+            Visit((dynamic) node[0]); // son : DefList
             //Visit((dynamic) node[1]);
         }
 
         public void Visit(DefList node) {
-            VisitChildren(node); // def-list ::=  <def>* //def ::= <var-def>|<fun-def>
+            VisitChildren((dynamic) node); // sons : (FunDef | VarDef)*
         }
-        public void Visit(FunDef node) { //<fun-def> :: = <id> “(“ <id-list>? “)” “{“ <var-def-list><stmt-list> ”}”
-            
-            //public HashSet<string> globalVariables = new HashSet<string>();
+
+        public void Visit(VarDef node){
+            // DON'T DO ANYTHING
+        }
+
+        public void Visit(FunDef node) { // sons : ParamList, var-def-list, stmt-list
             var funName = node.AnchorToken.Lexeme;
-            table.getGlobalFunctions()[funName].reference = new HashSet<string>();
             
             //Visit((dynamic) node[0], funName); // ParamList
             //Visit((dynamic) node[1], funName); // var-def-list
             //Visit((dynamic) node[2], funName); // stmt-list             
-            VisitChildren((dynamic) node, funName);
+            VisitChildren( node, funName);
         }
         
-        public void Visit(ParamList node, string fName){ // sons : Identifiers*
-            VisitChildren((dynamic) node, fName);
+        public void Visit(ParamList node, string fName){ // sons : NewIdentifiers*
+            VisitChildren( node, fName);
         }
         
-        public void Visit(VarDeflist node, string fName){ // sons : VarDef*
-            VisitChildren((dynamic) node, fName);
+        public void Visit(VarDefList node, string fName){ // sons : VarDef*
+            VisitChildren( node, fName);
         }
 
-        public void Visit(VarDef node, string fName){ // son : IdList
+        public void Visit(VarDef node, string fName){ // son : IdDefList
             Visit((dynamic) node[0], fName);
         }
-        
-        public void Visit(IdList node, string fName){ // sons : Identifiers*
-            //HashSet<string> localVarTable = new HashSet<string>;
-            VisitChildren((dynamic) node, fName);
+
+        public void Visit(IdDefList node, string fName){ // sons : NewIdentifiers*
+            VisitChildren( node, fName);
         }
 
-        //checar que nodo padre no sea Var Def, si si es y encuentra la referencia en getGlobal marcar error de Duplicate
-        public void Visit(Identifier node, string fName){ // I have no sons! =)
+        public void Visit(NewIdentifier node, string fName){ // no sons!
             var varName = node.AnchorToken.Lexeme;
-            if(tables.getGlobalFunctions()[fName].reference.Contains(varName)){
+            if(tables.getFunctionReference(fName).Contains(varName)){
                 throw new SemanticError(
-                    "Duplicated variable: " + varName + "in " + fName,
+                    "Duplicated variable: " + varName + " in " + fName,
                     node.AnchorToken);
             }else {
-                tables.getGlobalFunctions()[fName].reference.Add(varName);
+                tables.addLocalVariable(fName, varName);
             }
         }
+        
+        // DUDA
+        public void Visit(IdList node, string fName){ // sons : Identifiers*
+            VisitChildren( node, fName);
+        }
 
+        public void Visit(Identifier node, string fName){ // I have no sons! =)
+           var varName = node.AnchorToken.Lexeme;
+            if(tables.getFunctionReference(fName).Contains(varName) || tables.getGlobalVariables().Contains(varName)){
+                // This variable has already been declared and it's okay to use it :)
+            } else {
+                throw new SemanticError(
+                    "This variable : " + varName + " in " + fName + " hasn't been declared",
+                    node.AnchorToken);
+            }
+        }
+        //
         public void Visit(StmtList node, string fName){ // sons: StmtAssign, StmtFunCall, StmtWhile, StmtDoWhile, StmtIncr, StmtDecr, StmtIf, StmtBreak,StmtReturn, StmtEmpty
-            VisitChildren((dynamic) node, fName);
+            VisitChildren( node, fName);
         }
 
         public void Visit(StmtAssign node, string fName){ // sons: (+ - !) (* / %) (true false) (identifier, fun-call, array, lit) 
 
             var varName = node.AnchorToken.Lexeme;
-            if(tables.getGlobalFunctions()[fName].reference.Contains(varName)){
-                // 
-            }else {
+            if(tables.getFunctionReference(fName).Contains(varName) || tables.getGlobalVariables().Contains(varName)){ // exists?
+                Visit((dynamic) node[0], fName); // stmt assign can only have 1 children
+            }else { // else 
                 throw new SemanticError(
-                    "Expected variable: " + varName + "in " + fName,
+                    "Variable: " + varName + " hasn't been declared",
                     node.AnchorToken);
             }
             
             //functionTable[fName].reference.Add(varName);
             // TODO: visit sons, it can be any Lit node
-            Visit((dynamic) node[0]); // expr
+            //Visit((dynamic) node[0]); // expr
         }
 
-        // LIT
-        public void Visit(Int_Literal node, string fName){ 
+        // LITS
+        public void Visit(Int_Literal node, string fName){ //VALIDATE INT LITERAL
             var catchVal = node.AnchorToken.Lexeme;
+
+            int result;
+            if (!Int32.TryParse(catchVal, out result)) {
+                throw new SemanticError(
+                    "Variable: " + catchVal + " isn't in the aproved range of −2^31  and 2^31−1",
+                    node.AnchorToken);
+            }
         }
 
         public void Visit(Char_Literal node, string fName){ 
@@ -272,26 +312,6 @@ namespace Leviathan {
             var catchVal = node.AnchorToken.Lexeme;
         }
 
-        // OpUnary
-        public void Visit(Neg node, string fName){
-            VisitChildren(node, fName);
-        }
-
-        public void Visit(Plus node, string fName){
-            VisitChildren(node, fName);
-        }
-
-        // OpMul
-        public void Visit (Mul node, string fname){
-            VisitChildren(node, fName);
-        }
-        public void Visit (Div node, string fname){
-            VisitChildren(node, fName);
-        }
-        public void Visit (Mod node, string fname){
-            VisitChildren(node, fName);
-        }
-        
         // TRUE && FALSE
         public void Visit(True node, string fName){
             // I HAVE NO KIDS! =)            
@@ -300,19 +320,207 @@ namespace Leviathan {
         public void Visit(False node, string fName){
             // I HAVE NO KIDS! =)
         }
-        ///
 
-        public void Visit(ExprList node, string fName){
-            foreach (var n in node) {
-                Visit((dynamic) n, fName);
+        public void Visit(UnEqual node, string fName){
+            VisitChildren(node, fName);
+        }
+
+
+        public void Visit(Array node, string fName){ // son: expr-list
+            Visit((dynamic) node[0], fName); 
+        }
+         // OpAdd
+        public void Visit(Neg node, string fName){
+            VisitChildren( node, fName);
+        }
+
+        public void Visit(Plus node, string fName){
+            VisitChildren( node, fName);
+        }
+
+        public void Visit(Not node, string fName){
+            VisitChildren( node, fName);
+        }
+
+        // OpMul
+        public void Visit (Mul node, string fName){
+            VisitChildren( node, fName);
+        }
+        public void Visit (Div node, string fName){
+            VisitChildren( node, fName);
+        }
+        public void Visit (Mod node, string fName){
+            VisitChildren( node, fName);
+        }
+        
+        // OpRel
+        public void Visit(Less node, string fName){
+            VisitChildren( node , fName);
+        }
+
+        public void Visit(Less_Equal node, string fName){
+            VisitChildren( node, fName);
+        }
+
+        public void Visit(More node, string fName){
+            VisitChildren( node, fName);
+        }
+
+        public void Visit(More_Equal node, string fName){
+            VisitChildren( node, fName);
+        }
+
+        public void Visit(Equal node, string fName){
+            VisitChildren(node, fName);
+        }
+
+        // OpUnary
+        public void Visit (StmtFunCall node, string fName){ //sons:  exprlist
+            string funName = node.AnchorToken.Lexeme;
+            funCallName = funName;
+            //Console.WriteLine(tables.getGlobalFunctions().Contains(funName));
+            if(tables.getGlobalFunctions().Contains(funName)){
+                // The function exists
+                //Console.WriteLine("Hi");
+                Visit((dynamic) node[0], fName); //exprlist
+            } else {
+                throw new SemanticError(
+                    "Undeclared function: " + funName, node.AnchorToken);
             }
         }
+
+        
+        public void Visit (FunCall node, string fName){ //sons:  exprlist
+            string funName = node.AnchorToken.Lexeme;
+            funCallName = funName;
+            if(tables.getGlobalFunctions().Contains(funName)){
+                // The function exists
+                //Console.WriteLine("Hi");
+                Visit((dynamic) node[0], fName); //exprlist
+            } else {
+                throw new SemanticError(
+                    "Undeclared function: " + funName, node.AnchorToken);
+            }
+        }
+        public void Visit (StmtIncr node, string fName){
+            var varName = node.AnchorToken.Lexeme;
+            if(tables.getFunctionReference(fName).Contains(varName) || tables.getGlobalVariables().Contains(varName)){ // exists?
+                // variable exists, no sons
+            }else {  
+                throw new SemanticError(
+                    "Variable: " + varName + " hasn't been declared in " + fName,
+                    node.AnchorToken);
+            }
+        }
+        public void Visit (StmtDecr node, string fName){
+            var varName = node.AnchorToken.Lexeme;
+            if(tables.getFunctionReference(fName).Contains(varName) || tables.getGlobalVariables().Contains(varName)){ // exists?
+                // variable exists, no sons
+            }else {  
+                throw new SemanticError(
+                    "Variable: " + varName + " hasn't been declared in " + fName,
+                    node.AnchorToken);
+            }
+        }
+        public void Visit (StmtBreak node, string fName){ //sons: 
+        //No tiene hijos
+            //Console.WriteLine(inLoop);
+            if(inLoop==0){
+                throw new SemanticError(
+                    "Break not in a while or do while: in " + fName,
+                    node.AnchorToken);
+            }
+        }
+           //No tiene hijos
+        public void Visit (StmtReturn node, string fName){ //sons:  
+           Visit((dynamic) node[0], fName);
+        }
+        public void Visit (StmtEmpty node, string fName){ //sons:  
+           //No tiene hijos
+        }
+
+        public void Visit(StmtWhile node, string fName){
+            inLoop++;
+            Visit((dynamic) node[0], fName);
+            Visit((dynamic) node[1], fName);
+            inLoop--;
+        }
+
+        public void Visit(StmtDoWhile node , string fName){
+            inLoop++;
+            VisitChildren(node, fName);
+            inLoop--;
+        }
+
+        public void Visit(StmtIf node, string fName){
+            VisitChildren(node, fName);
+            
+        }
+
+        public void Visit(ElseIfList node, string fName){
+            VisitChildren(node, fName);
+        }
+
+        public void Visit(Elif node, string fName){
+            VisitChildren(node, fName);
+        }
+
+        public void Visit(Else node, string fName){
+            Visit((dynamic) node[0], fName);
+        }
+
+        public void Visit(ExprOr node, string fName){
+            VisitChildren( node, fName);
+        }
+
+        public void Visit(ExprAnd node, string fName){
+            VisitChildren( node, fName);
+        }
+
+
+         //stmt list 
+
+        //
+        public void Visit(ExprList node, string fName){ // sons: LITERALS* IDENTIFIER* FUNCALL* ARRAY? EMPTY
+           // Received the fName of the function to call
+           
+           int sonCtr = 0;
+           foreach (var n in node){
+               sonCtr++;
+           }
+           
+           
+            int aux = tables.getGlobalFunctions()[funCallName].getArity();
+             //Console.WriteLine(aux);
+            if (aux != sonCtr){
+                 throw new SemanticError(
+                    "The number of parameters do not match those defined in the function : " + fName,
+                    node[0].AnchorToken);
+           } 
+           else {
+                VisitChildren(node, fName); 
+           }
+
+        }
+
+        //expr
+
+        public void Visit(Condition node, string fName){
+            Visit((dynamic) node[0], fName);
+        }
+
+        public void Visit(LoopCondition node, string fName){
+            Visit((dynamic) node[0], fName);
+        }
+
+        
+        
         void VisitChildren(Node node) {
             foreach (var n in node) {
                 Visit((dynamic) n);
             }
         }
-        
+                
         void VisitChildren(Node node, string fName){
             foreach (var n in node) {
                 Visit((dynamic) n, fName);

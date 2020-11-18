@@ -25,9 +25,11 @@ namespace Leviathan {
     // Leviathan nodes
     class Program: Node {}
     class Identifier: Node {}
+    class NewIdentifier: Node {}
     class DefList: Node {}
     class VarDef : Node {}
     class IdList : Node {}
+    class IdDefList : Node {}
     class FunDef : Node {}
     class ParamList : Node {}
     class VarDefList : Node {}
@@ -73,4 +75,5 @@ namespace Leviathan {
     class Char_Literal : Node {}
     class String_Literal : Node {}
     
+    class EOF: Node {}
 }
