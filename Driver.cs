@@ -35,7 +35,8 @@ namespace Leviathan {
             "Lexical analysis",
             "Syntactic analysis",
             "AST construction",
-            "Semantic Analysis"
+            "Semantic Analysis",
+            "WAT code generation"
         };
 
          void PrintAppHeader() {
@@ -108,6 +109,15 @@ namespace Leviathan {
                     Console.WriteLine(entry);
                 }
                 Console.WriteLine();
+
+                var codeGenerator = new WATVisitor(semantic.Table);
+                File.WriteAllText(
+                    outputPath,
+                    codeGenerator.Visit((dynamic) ast));
+                Console.WriteLine(
+                    "Created WAT (WebAssembly text format) file "
+                    + $"'{outputPath}'.");
+
 
 
             } catch (Exception e) {

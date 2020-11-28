@@ -1,4 +1,4 @@
-# Levithan Compiler - AST construction
+# Levithan Compiler - Project make file:
 
 #   Camila Rovirosa A01024192
 #   Eduardo Badillo A01020716
@@ -18,14 +18,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-leviathan.exe: Driver.cs Scanner.cs Token.cs TokenCategory.cs Parser.cs \
-	SyntaxError.cs Node.cs SpecificNodes.cs SemanticVisitor.cs \
-	SemanticError.cs FunctionTable.cs
+all: leviathan.exe node_modules
 
-	mcs -out:leviathan.exe Driver.cs Scanner.cs Token.cs TokenCategory.cs \
-	Parser.cs SyntaxError.cs Node.cs SpecificNodes.cs SemanticVisitor.cs \
-	SemanticError.cs FunctionTable.cs
+node_modules:
+	npm init -y
+	npm install wabt --save
+
+leviathan.exe: Driver.cs Scanner.cs Token.cs TokenCategory.cs \
+	Parser.cs SyntaxError.cs Node.cs SpecificNodes.cs \
+	SemanticVisitor.cs SemanticError.cs FunctionTable.cs\
+	WATVisitor.cs
+
+	mcs -out:Driver.cs Scanner.cs Token.cs TokenCategory.cs \
+	Parser.cs SyntaxError.cs Node.cs SpecificNodes.cs \
+	SemanticVisitor.cs SemanticError.cs FunctionTable.cs\
+	WATVisitor.cs
 
 
 clean:
 	rm leviathan.exe
+	rm -f package.json package-lock.json
+	rm -rf node_modules
