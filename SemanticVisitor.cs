@@ -195,6 +195,7 @@ namespace Leviathan {
         //bool inLoop = false; // considerar como un entero
         public int inLoop = 0;
         string funCallName;
+        Node parentNode;
         // set para variables globales
         private Globales tables;
         //Tablas para la primera pasada
@@ -278,6 +279,7 @@ namespace Leviathan {
 
         public void Visit(StmtAssign node, string fName){ // sons: (+ - !) (* / %) (true false) (identifier, fun-call, array, lit) 
 
+            parentNode = (dynamic)node;
             var varName = node.AnchorToken.Lexeme;
             if(tables.getFunctionReference(fName).Contains(varName) || tables.getGlobalVariables().Contains(varName)){ // exists?
                 Visit((dynamic) node[0], fName); // stmt assign can only have 1 children
@@ -327,6 +329,8 @@ namespace Leviathan {
 
 
         public void Visit(Array node, string fName){ // son: expr-list
+            funCallName = "array";
+            
             Visit((dynamic) node[0], fName); 
         }
          // OpAdd
@@ -378,6 +382,7 @@ namespace Leviathan {
         public void Visit (StmtFunCall node, string fName){ //sons:  exprlist
             string funName = node.AnchorToken.Lexeme;
             funCallName = funName;
+            parentNode = (dynamic)node;
             //Console.WriteLine(tables.getGlobalFunctions().Contains(funName));
             if(tables.getGlobalFunctions().Contains(funName)){
                 // The function exists
@@ -392,7 +397,7 @@ namespace Leviathan {
         
         public void Visit (FunCall node, string fName){ //sons:  exprlist
             string funName = node.AnchorToken.Lexeme;
-            funCallName = funName;
+            funCallName = (dynamic)funName;
             if(tables.getGlobalFunctions().Contains(funName)){
                 // The function exists
                 //Console.WriteLine("Hi");
@@ -481,29 +486,30 @@ namespace Leviathan {
          //stmt list 
 
         //
+
         public void Visit(ExprList node, string fName){ // sons: LITERALS* IDENTIFIER* FUNCALL* ARRAY? EMPTY
            // Received the fName of the function to call
            
-           int sonCtr = 0;
-           foreach (var n in node){
-               sonCtr++;
-           }
-           
-           
-            int aux = tables.getGlobalFunctions()[funCallName].getArity();
-             //Console.WriteLine(aux);
-            if (aux != sonCtr){
-                 throw new SemanticError(
-                    "The number of parameters do not match those defined in the function : " + fName,
-                    node[0].AnchorToken);
-           } 
-           else {
+           if(funCallName!="array"){
+            int sonCtr = 0;
+            foreach (var n in node){
+                sonCtr++;
+            }
+            
+                int acceptedParams = tables.getGlobalFunctions()[funCallName].getArity();
+                
+                if (acceptedParams != sonCtr){
+                    throw new SemanticError(
+                        "The function " + funCallName + " accepts " + acceptedParams + " args, but " + sonCtr + " were found.",
+                        parentNode.AnchorToken);
+            } else {
                 VisitChildren(node, fName); 
+            }
+           } else {
+            VisitChildren(node, fName);
            }
 
         }
-
-        //expr
 
         public void Visit(Condition node, string fName){
             Visit((dynamic) node[0], fName);
