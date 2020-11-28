@@ -69,6 +69,7 @@ namespace Leviathan {
 
             try {
                 var inputPath = args[0];
+                var outputPath = args[1];
                 var input = File.ReadAllText(inputPath);
             
                 var parser = new Parser(new Scanner(input).Start().GetEnumerator());
@@ -82,7 +83,7 @@ namespace Leviathan {
                 semantic.Visit((dynamic) program);
 
                 Console.WriteLine("Semantics OK.");
-                Console.WriteLine();
+                /*Console.WriteLine();
                 Console.WriteLine("Function Table");
                 Console.WriteLine("============");
                 foreach (var entry in globales.getGlobalFunctions()) {
@@ -96,24 +97,26 @@ namespace Leviathan {
                 {
                         Console.WriteLine(entry); 
                 }
-                Console.WriteLine();
+                Console.WriteLine();*/
 
                 var parser2 = new Parser(new Scanner(input).Start().GetEnumerator());
                 var program2 = parser2.Program();
                 var semantic2 = new SemanticVisitor2();
                 semantic2.Visit((dynamic) program2);
 
-                Console.WriteLine("Function Table with Variables");
+                /*Console.WriteLine("Function Table with Variables");
                 Console.WriteLine("============");
                 foreach (var entry in globales.getGlobalFunctions()) {
                     Console.WriteLine(entry);
                 }
-                Console.WriteLine();
-
-                var codeGenerator = new WATVisitor(semantic.Table);
+                Console.WriteLine();*/
+                
+                
+                // Read the global variable table and function table
+                var codeGenerator = new WATVisitor(globales.getGlobalFunctions(), globales.getGlobalVariables());
                 File.WriteAllText(
                     outputPath,
-                    codeGenerator.Visit((dynamic) ast));
+                    codeGenerator.Visit((dynamic) program2));
                 Console.WriteLine(
                     "Created WAT (WebAssembly text format) file "
                     + $"'{outputPath}'.");
@@ -122,7 +125,9 @@ namespace Leviathan {
 
             } catch (Exception e) {
 
-                if (e is FileNotFoundException || e is SyntaxError|| e is SemanticError) {
+                if (e is FileNotFoundException
+                    || e is SyntaxError
+                    || e is SemanticError) {
                     Console.Error.WriteLine(e.Message);
                     Environment.Exit(1);
                 }
