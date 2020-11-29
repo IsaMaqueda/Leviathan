@@ -45,6 +45,26 @@ namespace Leviathan {
 
         StringBuilder sb = new StringBuilder();
         
+        //Auxiliary methods
+        
+        
+        // convert str to utf-32
+        public IList<int> AsCodePoints(string str){
+            var result = new List<int>(str.length);
+            for(int i=0; i<str.Length; i++){
+                result.Add(char.ConvertToUtf32(str, i));
+                if(char.isHighSurrogate(str, i)){
+                    i++;
+                }
+            }
+            return result;
+        }
+
+        // return a unique label identifier
+        int labelCounter = 0;
+        public String GenerateLabel(){
+            return $"{labelCounter++:00000}";
+        }
         //-----------------------------------------------------------
 
         // add global variables and global functions
@@ -72,7 +92,7 @@ namespace Leviathan {
                     builder.Append($"  (import \"leviathan\" \"{entry.Key}\" (func ${entry.Key}");
                     int arity = entry.Value.getArity();
                     for(int i = 0; i< arity; i++){
-                        builder.Append(" (param i32)");
+                        builder.Append(" (param i32)"); // multiple params can be declared as (param i32 i32 i32)
                     }
                     builder.Append(" (result i32)))\n");
                 }
@@ -81,10 +101,10 @@ namespace Leviathan {
             return result;
         }
         
-        private string getVariables(){
+        private string getVariables(){ // define all global variables
             StringBuilder builder = new StringBuilder();
             foreach(var entry in gVar){
-                builder.Append($"    (local ${entry} i32)\n");
+                builder.Append($"    (global ${entry} (mut i32) (i32.const 0))\n");
             }
             string result = builder.ToString();
             return result;
@@ -170,92 +190,120 @@ namespace Leviathan {
             var varName = node.AnchorToken.Lexeme;
             // definir si una es una variable local o global
             if(gVar.Contains(varname)){ // variable global
-                sb.Append($"     (global.set 
-            } else { // variable local
-
+                sb.Append($"     (global.set \n");
+                Visit((dynamic) node[0], fName); 
+                sb.Append($"    )\n");
+            } else {                    // variable local
+                sb.Append($"     (local.set \n");
+                Visit((dynamic) node[0], fName); 
+                sb.Append($"    )\n");
             }
-            Visit((dynamic) node[0], fName); // stmt assign can only have 1 children
-            sb.Append($"     (local.set ${varName} i32)\n");
         }
 
         // LITS
-        public void Visit(Int_Literal node, string fName){ //VALIDATE INT LITERAL
+        public void Visit(Int_Literal node, string fName){ 
             var catchVal = node.AnchorToken.Lexeme;
-
             sb.Append($"     i32.const {catchVal}\n");
         }
 
         public void Visit(Char_Literal node, string fName){ 
             var catchVal = node.AnchorToken.Lexeme;
-            
+            var literal = AsCodePoints(Char.ToString(catchVal));
+            sb.Append($"     i32.const {literal}");
         }
 
+        // arrays and string literals are stored in handles (a js array)
+        // and are identified in WAT code by their generated labels
         public void Visit(String_Literal node, string fName){ 
             var catchVal = node.AnchorToken.Lexeme;
+            IList<int> codes = AsCodePoints(catchVal);
+            var t = GenerateLabel();
+            t = new(0);
+            foreach (int code in codes)
+            {
+                add(t, code);
+            }
+            sb.Append($"     i32.const {t}");
         }
 
         // TRUE && FALSE
         public void Visit(True node, string fName){
-            // I HAVE NO KIDS! =)         
+            // I HAVE NO KIDS! =)        
+              sb.Append("    i32.const 1\n"); 
         }
 
         public void Visit(False node, string fName){
             // I HAVE NO KIDS! =)
+              sb.Append("    i32.const 0\n");
         }
 
         public void Visit(UnEqual node, string fName){
             VisitChildren(node, fName);
+            sb.Append("      i32.ne\n");
         }
-
 
         public void Visit(Array node, string fName){ // son: expr-list
             funCallName = "array";
-            
+            var t = GenerateLabel();
+            t = new(0);
+            sb.Append($"     i32.const {t}");
             Visit((dynamic) node[0], fName); 
         }
          // OpAdd
         public void Visit(Neg node, string fName){
-            VisitChildren( node, fName);
+            //sb.Append("      i32.const 0\n"); // duda
+            VisitChildren( node, fName); 
+            sb.Append("      i32.sub\n");
         }
 
         public void Visit(Plus node, string fName){
             VisitChildren( node, fName);
+            sb.Append("      i32.add\n");
         }
 
-        public void Visit(Not node, string fName){
+        public void Visit(Not node, string fName){ // !
             VisitChildren( node, fName);
+            sb.Append("      i32.eqz\n");
         }
 
         // OpMul
         public void Visit (Mul node, string fName){
             VisitChildren( node, fName);
+            sb.Append("      i32.mul\n");
         }
         public void Visit (Div node, string fName){
             VisitChildren( node, fName);
+            sb.Append("      i32.div\n");
         }
         public void Visit (Mod node, string fName){
             VisitChildren( node, fName);
+            sb.Append("      i32.rem_s\n");
         }
         
         // OpRel
         public void Visit(Less node, string fName){
             VisitChildren( node , fName);
+            sb.Append("      i32.lt_s\n");
         }
 
         public void Visit(Less_Equal node, string fName){
             VisitChildren( node, fName);
+            sb.Append("      i32.le_s\n");
         }
 
         public void Visit(More node, string fName){
             VisitChildren( node, fName);
+            sb.Append("      i32.gt_s\n");
         }
 
         public void Visit(More_Equal node, string fName){
             VisitChildren( node, fName);
+            sb.Append("      i32.ge_s\n");
         }
 
         public void Visit(Equal node, string fName){
             VisitChildren(node, fName);
+            sb.Append("      i32.eq\n");
         }
 
         // OpUnary

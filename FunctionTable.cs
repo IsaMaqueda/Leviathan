@@ -30,7 +30,7 @@ using System.Collections.Generic;
 namespace Leviathan {
 
     public class FunctionRow {
-        public bool primitive;
+        public bool primitive { get; private set; }
         public int arity;
         public HashSet<string> reference { get; set; }
 
@@ -48,10 +48,11 @@ namespace Leviathan {
         public int getArity(){
             return this.arity;
         }
+        
+    
         public bool getPrimitive(){
             return this.primitive;
         }
-        
         
         public HashSet<string> getReference(){
             return this.reference;
