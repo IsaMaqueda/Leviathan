@@ -27,10 +27,13 @@ namespace Leviathan {
 
     class WATVisitor {
 
-        //Globales table;
+        // controller variables
         public int inLoop = 0;
         string funCallName;
+        string idFather = "";
         Node parentNode;
+
+        //
 
         public FunctionTable fTable{
             get; 
@@ -132,6 +135,7 @@ namespace Leviathan {
             }*/
             //sb.Append(" (result i32)\n");
             VisitChildren(node, funName);
+            // TODO: Must return 0 
             sb.Append(" )\n");
         
             //Visit((dynamic) node[0], funName); // ParamList
@@ -141,7 +145,8 @@ namespace Leviathan {
         
         public void Visit(ParamList node, string fName){ // sons : NewIdentifiers*
             VisitChildren( node, fName);
-            sb.Append($"     (result i32)");
+            idFather = "ParamList";
+            sb.Append($"     (result i32)\n");
         }
         
         public void Visit(VarDefList node, string fName){ // sons : VarDef*
@@ -149,24 +154,25 @@ namespace Leviathan {
         }
 
         public void Visit(VarDef node, string fName){ //LOCAL son : IdDefList 
-            parentNode = (dynamic) node;
             Visit((dynamic) node[0], fName);
         }
 
         public void Visit(IdDefList node, string fName){ // sons : NewIdentifiers*
+            idFather = "IdDefList";
             return VisitChildren( node, fName);
         }
 
         public void Visit(NewIdentifier node, string fName){ // Add local variables no sons!
+            // NewIdentifier can be a new local or global variable or a parameter of a function def
             var varName = node.AnchorToken.Lexeme;
 
-            if(parentNode.Equals(typeof(FunDef))){
-                
-                sb.Append($"     (param ${varName}i32)\n");
-                    
-            } else {
-                 sb.Append($"     (local ${varName} i32)\n");
-            }
+            if(parentNode.Equals(typeof(FunDef))){  // only enter
+                if(idFather=="ParamList"){ // parameter, immediate father: paramlist, gf : fundef
+                    sb.Append($"     (param ${varName} i32)\n");
+                } else { // local variable, immediate father: idDefList, gf : fundef
+                    sb.Append($"     (local ${varName} i32)\n");
+                }                       
+            } 
         }
         
         // DUDA
@@ -311,50 +317,46 @@ namespace Leviathan {
             string funName = node.AnchorToken.Lexeme;
             funCallName = funName;
             parentNode = (dynamic)node;
-            //Console.WriteLine(tables.getGlobalFunctions().Contains(funName));
-            if(tables.getGlobalFunctions().Contains(funName)){
-                // The function exists
-                //Console.WriteLine("Hi");
-                Visit((dynamic) node[0], fName); //exprlist
-            } else {
-                throw new SemanticError(
-                    "Undeclared function: " + funName, node.AnchorToken);
-            }
+            VisitChildren(node, fName); // puts args before function call
+            sb.Append($"      call ${funName}\n");
         }
 
         
         public void Visit (FunCall node, string fName){ //sons:  exprlist
             string funName = node.AnchorToken.Lexeme;
             funCallName = (dynamic)funName;
-            if(tables.getGlobalFunctions().Contains(funName)){
-                // The function exists
-                //Console.WriteLine("Hi");
-                Visit((dynamic) node[0], fName); //exprlist
-            } else {
-                throw new SemanticError(
-                    "Undeclared function: " + funName, node.AnchorToken);
-            }
+            VisitChildren(node, fName); // puts args before function call
+            sb.Append($"      call ${funName}\n");
         }
+
         public void Visit (StmtIncr node, string fName){
             var varName = node.AnchorToken.Lexeme;
-            if(tables.getFunctionReference(fName).Contains(varName) || tables.getGlobalVariables().Contains(varName)){ // exists?
-                // variable exists, no sons
-            }else {  
-                throw new SemanticError(
-                    "Variable: " + varName + " hasn't been declared in " + fName,
-                    node.AnchorToken);
+            if(gVar.Contains(varName)){
+                sb.Append($"     global.get ${varName}");
+                sb.Append($"     i32.const 1");
+                sb.Append($"     i32.add");
+            } else {
+                sb.Append($"     local.get ${varName}");
+                sb.Append($"     i32.const 1");
+                sb.Append($"     i32.add");
             }
+            
         }
         public void Visit (StmtDecr node, string fName){
             var varName = node.AnchorToken.Lexeme;
-            if(tables.getFunctionReference(fName).Contains(varName) || tables.getGlobalVariables().Contains(varName)){ // exists?
-                // variable exists, no sons
-            }else {  
-                throw new SemanticError(
-                    "Variable: " + varName + " hasn't been declared in " + fName,
-                    node.AnchorToken);
+
+            if(gVar.Contains(varName)){
+                sb.Append($"     global.get ${varName}");
+                sb.Append($"     i32.const 1");
+                sb.Append($"     i32.sub");
+            } else {
+                sb.Append($"     local.get ${varName}");
+                sb.Append($"     i32.const 1");
+                sb.Append($"     i32.sub");
             }
+            
         }
+
         public void Visit (StmtBreak node, string fName){ //sons: 
         //No tiene hijos
             //Console.WriteLine(inLoop);
@@ -416,26 +418,16 @@ namespace Leviathan {
         //
 
         public void Visit(ExprList node, string fName){ // sons: LITERALS* IDENTIFIER* FUNCALL* ARRAY? EMPTY
-           // Received the fName of the function to call
            
-           if(funCallName!="array"){
-            int sonCtr = 0;
-            foreach (var n in node){
-                sonCtr++;
-            }
-            
-                int acceptedParams = tables.getGlobalFunctions()[funCallName].getArity();
-                
-                if (acceptedParams != sonCtr){
-                    throw new SemanticError(
-                        "The function " + funCallName + " accepts " + acceptedParams + " args, but " + sonCtr + " were found.",
-                        parentNode.AnchorToken);
-            } else {
-                VisitChildren(node, fName); 
-            }
-           } else {
-            VisitChildren(node, fName);
+           // Load args or array elements 
+           VisitChildren(node, fName);
+           /*
+           if(funCallName!="array"){ // father is stmtfuncall
+
+           } else {                  // father is array
+            VisitChildren(node, fName); 
            }
+           */
 
         }
 
