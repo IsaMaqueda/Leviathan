@@ -58,10 +58,9 @@ namespace Leviathan {
     
                 sb.Append("  )\n");
                 sb.Append(")\n");
-                sb.Append(Visit((dynamic) node[0]))
-                string result = sb.ToString();
+                sb.Append(Visit((dynamic) node[0]));
 
-                return result;
+                return sb.ToString();
         }
         
         private string getFunctions(){
@@ -169,9 +168,14 @@ namespace Leviathan {
         public void Visit(StmtAssign node, string fName){ // sons: (+ - !) (* / %) (true false) (identifier, fun-call, array, lit) 
             parentNode = (dynamic)node;
             var varName = node.AnchorToken.Lexeme;
-            // set local o un set global
+            // definir si una es una variable local o global
+            if(gVar.Contains(varname)){ // variable global
+                sb.Append($"     (global.set 
+            } else { // variable local
+
+            }
             Visit((dynamic) node[0], fName); // stmt assign can only have 1 children
-            sb.Append($"     (local.set ${varName} i32)\n")
+            sb.Append($"     (local.set ${varName} i32)\n");
         }
 
         // LITS
