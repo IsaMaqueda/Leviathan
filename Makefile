@@ -26,12 +26,12 @@ node_modules:
 
 leviathan.exe: Driver.cs Scanner.cs Token.cs TokenCategory.cs \
 	Parser.cs SyntaxError.cs Node.cs SpecificNodes.cs \
-	SemanticVisitor.cs SemanticError.cs FunctionTable.cs\
+	SemanticVisitor.cs SemanticError.cs FunctionTable.cs \
 	WATVisitor.cs
 
-	mcs -out:Driver.cs Scanner.cs Token.cs TokenCategory.cs \
+	mcs -out:leviathan.exe  Driver.cs Scanner.cs Token.cs TokenCategory.cs \
 	Parser.cs SyntaxError.cs Node.cs SpecificNodes.cs \
-	SemanticVisitor.cs SemanticError.cs FunctionTable.cs\
+	SemanticVisitor.cs SemanticError.cs FunctionTable.cs \
 	WATVisitor.cs
 
 
@@ -39,3 +39,4 @@ clean:
 	rm leviathan.exe
 	rm -f package.json package-lock.json
 	rm -rf node_modules
+	rm -f 001_hello.wat 001_hello.wasm 002_binary.wat 002_binary.wasm

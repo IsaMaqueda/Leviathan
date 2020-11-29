@@ -61,7 +61,7 @@ namespace Leviathan {
             Console.WriteLine();
             
             // Input file
-            if (args.Length != 1) {
+            if (args.Length != 2) {
                 Console.Error.WriteLine(
                     "Please specify the name of the input file.");
                 Environment.Exit(1);
