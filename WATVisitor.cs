@@ -31,6 +31,7 @@ namespace Leviathan {
         public int inLoop = 0;
         string funCallName;
         string idFather = "";
+        int ifFlag = 0;
         Node parentNode;
 
         //
@@ -90,7 +91,7 @@ namespace Leviathan {
             StringBuilder builder = new StringBuilder();
 
             foreach(KeyValuePair<string, FunctionRow> entry in fTable ){
-                //Console.WriteLine(entry.Value.getPrimitive());
+                
                 if(entry.Value.getPrimitive()){
                     builder.Append($"  (import \"leviathan\" \"{entry.Key}\" (func ${entry.Key}");
                     int arity = entry.Value.getArity();
@@ -135,7 +136,10 @@ namespace Leviathan {
             }*/
             //sb.Append(" (result i32)\n");
             VisitChildren(node, funName);
-            // TODO: Must return 0 
+            
+            sb.Append("     return\n");
+            sb.Append("     end\n");
+            sb.Append("     i32.const 0\n");
             sb.Append(" )\n");
         
             //Visit((dynamic) node[0], funName); // ParamList
@@ -144,8 +148,8 @@ namespace Leviathan {
         }
         
         public void Visit(ParamList node, string fName){ // sons : NewIdentifiers*
-            VisitChildren( node, fName);
             idFather = "ParamList";
+            VisitChildren( node, fName);
             sb.Append($"     (result i32)\n");
         }
         
@@ -221,15 +225,18 @@ namespace Leviathan {
         // arrays and string literals are stored in handles (a js array)
         // and are identified in WAT code by their generated labels
         public void Visit(String_Literal node, string fName){ 
+            /*
             var catchVal = node.AnchorToken.Lexeme;
             IList<int> codes = AsCodePoints(catchVal);
             var t = GenerateLabel();
-            t = new(0);
+            //pregunta maestro, lo que se quiere usar es el api de leviathan, como importar o como 
+            //mandar a llamar 
+            //t = new(0);
             foreach (int code in codes)
             {
-                add(t, code);
+                //add(t, code);
             }
-            sb.Append($"     i32.const {t}");
+            sb.Append($"     i32.const {t}");*/
         }
 
         // TRUE && FALSE
@@ -249,6 +256,8 @@ namespace Leviathan {
         }
 
         public void Visit(Array node, string fName){ // son: expr-list
+
+            //pregunta sobre array mostrar como ejemplo https://openhome.cc/eGossip/WebAssembly/Array.html
             funCallName = "array";
             var t = GenerateLabel();
             t = new(0);
@@ -332,13 +341,13 @@ namespace Leviathan {
         public void Visit (StmtIncr node, string fName){
             var varName = node.AnchorToken.Lexeme;
             if(gVar.Contains(varName)){
-                sb.Append($"     global.get ${varName}");
-                sb.Append($"     i32.const 1");
-                sb.Append($"     i32.add");
+                sb.Append($"     global.get ${varName} \n");
+                sb.Append($"     i32.const 1 \n");
+                sb.Append($"     i32.add \n");
             } else {
-                sb.Append($"     local.get ${varName}");
-                sb.Append($"     i32.const 1");
-                sb.Append($"     i32.add");
+                sb.Append($"     local.get ${varName} \n");
+                sb.Append($"     i32.const 1 \n");
+                sb.Append($"     i32.add \n");
             }
             
         }
@@ -346,13 +355,13 @@ namespace Leviathan {
             var varName = node.AnchorToken.Lexeme;
 
             if(gVar.Contains(varName)){
-                sb.Append($"     global.get ${varName}");
-                sb.Append($"     i32.const 1");
-                sb.Append($"     i32.sub");
+                sb.Append($"     global.get ${varName} \n");
+                sb.Append($"     i32.const 1 \n");
+                sb.Append($"     i32.sub \n");
             } else {
-                sb.Append($"     local.get ${varName}");
-                sb.Append($"     i32.const 1");
-                sb.Append($"     i32.sub");
+                sb.Append($"     local.get ${varName} \n");
+                sb.Append($"     i32.const 1 \n");
+                sb.Append($"     i32.sub \n");
             }
             
         }
@@ -360,56 +369,109 @@ namespace Leviathan {
         public void Visit (StmtBreak node, string fName){ //sons: 
         //No tiene hijos
             //Console.WriteLine(inLoop);
-            if(inLoop==0){
-                throw new SemanticError(
-                    "Break not in a while or do while: in " + fName,
-                    node.AnchorToken);
-            }
-        }
-           //No tiene hijos
-        public void Visit (StmtReturn node, string fName){ //sons:  
-           Visit((dynamic) node[0], fName);
-        }
-        public void Visit (StmtEmpty node, string fName){ //sons:  
-           //No tiene hijos
-        }
-
-        public void Visit(StmtWhile node, string fName){
-            inLoop++;
-            Visit((dynamic) node[0], fName);
-            Visit((dynamic) node[1], fName);
-            inLoop--;
-        }
-
-        public void Visit(StmtDoWhile node , string fName){
-            inLoop++;
-            VisitChildren(node, fName);
-            inLoop--;
-        }
-
-        public void Visit(StmtIf node, string fName){
-            VisitChildren(node, fName);
             
         }
+           //No tiene hijos
+        public void Visit (StmtReturn node, string fName){ //sons:  maybe
+            Visit((dynamic) node[0], fName);
+            sb.Append($"     return\n");
+        }
+        public void Visit (StmtEmpty node, string fName){ //sons:  
+           //DON'T DO ANYTHING
+        }
 
-        public void Visit(ElseIfList node, string fName){
+        public void Visit(StmtWhile node, string fName){ //Duda no sabemos si esta bien
+            /*inLoop++;
+            Visit((dynamic) node[0], fName);
+            Visit((dynamic) node[1], fName);
+            inLoop--;*/
+            var label1 = GenerateLabel();
+            var label2 = GenerateLabel();
+            sb.Append($"     block ${label1}\n");
+            sb.Append($"     loop ${label2}\n");
+            Visit((dynamic) node[0], fName);
+            sb.Append($"     i32.eqz\n");
+            sb.Append($"     br_if ${label1}\n");
+            Visit((dynamic) node[1], fName);
+            sb.Append($"     br ${label2}\n");
+            sb.Append($"     end\n"); //loop
+            sb.Append($"     end\n"); //block
+        }
+
+        public void Visit(StmtDoWhile node , string fName){ //Duda igual
+            /*inLoop++;
             VisitChildren(node, fName);
+            inLoop--;*/
+            var label1 = GenerateLabel();
+            var label2 = GenerateLabel();
+            sb.Append($"     block ${label1}\n");
+            sb.Append($"     loop ${label2}\n");
+            Visit((dynamic) node[1], fName);
+            sb.Append($"     i32.eqz\n");
+            sb.Append($"     br_if ${label1}\n");
+            Visit((dynamic) node[0], fName);
+            sb.Append($"     br ${label2}\n");
+            sb.Append($"     end\n"); //loop
+            sb.Append($"     end\n"); //block
+        }
+
+        public void Visit(StmtIf node, string fName){// a llorar con el profe DUDA
+            // evaluate condition
+            Visit((dynamic) node[0], fName);
+            sb.Append($"     if\n");
+            
+            // execute stmtlist
+            Visit((dynamic) node[1], fName);
+            
+            // else if list 
+            Visit((dynamic) node[2], fName); 
+            
+            // determine if StmtIf has an else son 
+            if(childrenCounter(node)>3){
+                Visit((dynamic) node[3], fName);
+            }
+            sb.Append($"     end         \n");          
+            sb.Append($"     i32.const 0 \n");          
+        }
+
+        public void Visit(ElseIfList node, string fName){ // sons : elif*
+            if(childrenCounter(node)>0){
+                ifFlag = 1; // activate ifFlag to tell that else statement has been appended
+                sb.Append($"    else");
+                VisitChildren(node, fName); // add multiple if statements nested in the else "elifs"*
+            }
         }
 
         public void Visit(Elif node, string fName){
-            VisitChildren(node, fName);
+            // evaluate condition
+            Visit(node[0], fName);
+
+            sb.Append($"        if\n");
+
+            // execute statement        
+            Visit(node[1], fName);
+
+            sb.Append($"        end\n");
         }
 
         public void Visit(Else node, string fName){
-            Visit((dynamic) node[0], fName);
+            if(ifFlag){
+                VisitChildren(node, fName);         
+            } else {
+                sb.Append($"     else\n");
+                VisitChildren(node, fName);         
+            }
+            ifFlag = 0;
         }
 
         public void Visit(ExprOr node, string fName){
             VisitChildren( node, fName);
+            sb.Append($"     i32.or \n");
         }
 
         public void Visit(ExprAnd node, string fName){
             VisitChildren( node, fName);
+            sb.Append($"     i32.and \n");
         }
 
 
@@ -439,7 +501,14 @@ namespace Leviathan {
             Visit((dynamic) node[0], fName);
         }
 
-        
+        // auxiliary function to return the number of children of a node
+        public int childrenCounter(Node node){
+            int childCtr = 0;
+            foreach(var n in node){
+                childCtr++;
+            }
+            return childCtr;
+        }
         
         public void VisitChildren(Node node) {
             
