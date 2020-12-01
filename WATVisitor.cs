@@ -22,6 +22,7 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace Leviathan {
 
@@ -55,10 +56,10 @@ namespace Leviathan {
         
         // convert str to utf-32
         public IList<int> AsCodePoints(string str){
-            var result = new List<int>(str.length);
+            var result = new List<int>(str.Length);
             for(int i=0; i<str.Length; i++){
                 result.Add(char.ConvertToUtf32(str, i));
-                if(char.isHighSurrogate(str, i)){
+                if(char.IsHighSurrogate(str, i)){
                     i++;
                 }
             }
@@ -108,10 +109,10 @@ namespace Leviathan {
                 + "the leviathan compiler.\n\n"
                 + "(module\n"
                 + getFunctions()
-                + "  (func (export \"start\")\n"
+                //+ "  (func (export \"start\")\n"
                 + getVariables()
                 + (Visit((dynamic) node[0]))
-                + "  )\n" 
+                //+ "  )\n" 
                 + ")\n";
            
         }
@@ -132,7 +133,13 @@ namespace Leviathan {
             funCallName = funName;
             parentNode = (dynamic) node;
             StringBuilder lb = new StringBuilder();
-            sb.Append($"    (func ${funName} \n" );
+            if(funName=="main"){
+                sb.Append($"    (func (export \"{funName}\")\n" );
+                //sb.Append($"    (result i32)\n" );    
+            } else {
+                //sb.Append($"    (func ${funName} (result i32)\n" );
+                sb.Append($"    (func ${funName} \n" );
+            }
             // local variables temporales variables 
             // resetear variables temporales
             lb.Append(VisitChildren(node, funName));
@@ -147,8 +154,8 @@ namespace Leviathan {
         public string Visit(ParamList node, string fName){ // sons : NewIdentifiers*
             StringBuilder lb = new StringBuilder();
             idFather = "ParamList";
-            lb.Append(VisitChildren( node, fName));                        
-            lb.Append($"     (result i32)\n");
+            sb.Append(VisitChildren( node, fName));                        
+            sb.Append($"     (result i32)\n");
             
             //sb.Append($"     (local i32)\n");
             return lb.ToString();
@@ -171,14 +178,14 @@ namespace Leviathan {
             // NewIdentifier can be a new local or global variable or a parameter of a function def
             var varName = node.AnchorToken.Lexeme;
 
-            if(parentNode.Equals(typeof(FunDef))){  // only enter
+            //if(parentNode.Equals(typeof(FunDef))){  // only enter
                 if(idFather=="ParamList"){ // parameter, immediate father: paramlist, gf : fundef
                     return $"     (param ${varName} i32)\n" ; 
                 } else { // local variable, immediate father: idDefList, gf : fundef
                     return $"     (local ${varName} i32)\n"; 
                 }                       
-            } 
-            return "";
+            //} 
+            //return "";
         }
         
         //
@@ -188,7 +195,7 @@ namespace Leviathan {
 
         public string Visit(Identifier node, string fName){ // I have no sons! =)
            var varName = node.AnchorToken.Lexeme;
-           return $"     (local.get ${varName} i32)\n";
+           return $"     (local.get ${varName})\n";
             
         }
         //
@@ -203,14 +210,16 @@ namespace Leviathan {
             
             StringBuilder lb = new StringBuilder();
 
-            if(gVar.Contains(varname)){ // variable global
-                lb.Append($"     (global.set \n");
+            if(gVar.Contains(varName)){ // variable global
+                //lb.Append($"     (global.set \n");
                 lb.Append(Visit((dynamic) node[0], fName)); 
-                lb.Append($"    )\n");
+                lb.Append("      global.set");
+                //lb.Append($"    )\n");
             } else {                    // variable local
-                lb.Append($"     (local.set \n");
+                //lb.Append($"     (local.set \n");
                 lb.Append(Visit((dynamic) node[0], fName)); 
-                lb.Append($"    )\n");
+                lb.Append("      local.set\n");
+                //lb.Append($"    )\n");
             }
             return lb.ToString();
         }
@@ -222,8 +231,9 @@ namespace Leviathan {
         }
 
         public string Visit(Char_Literal node, string fName){ 
-            var catchVal = node.AnchorToken.Lexeme;
-            var literal = AsCodePoints(Char.ToString(catchVal));
+            string catchVal = node.AnchorToken.Lexeme;
+            
+            var literal = AsCodePoints(catchVal.ToString());
             return $"     i32.const {literal}";
         }
 
@@ -245,7 +255,7 @@ namespace Leviathan {
             // with the new temporal variable
             lb.Append($"      i32.const 0 \n ");
             lb.Append($"      call $new \n");
-            lb.Append($"      local.set {t} "); // TODO: resetear la secuencia de las variables locales
+            lb.Append($"      local.set {t}\n "); // TODO: resetear la secuencia de las variables locales
 
             // for each children node of expr-list
             foreach(var code in codes){
@@ -254,7 +264,7 @@ namespace Leviathan {
                 lb.Append($"     local.get {t} \n");
 
                 // retrieve the element to be added to the array
-                lb.Append(code);
+                lb.Append($"      i32.const {code}\n");
 
                 // call the add function of the leviathanAPI
                 // so that it can be added to the array object
@@ -388,7 +398,7 @@ namespace Leviathan {
             parentNode = (dynamic)node;
             
             return VisitChildren(node, fName) // puts args before function call
-            + $"      call ${funName}\n";
+            + $"      call ${funName}\n"
             +"      drop \n";
         }
 
@@ -438,7 +448,7 @@ namespace Leviathan {
             //No tiene hijos
             //Console.WriteLine(inLoop);
             //hacer un pick de la pila
-            var label = pila.peek();
+            var label = pila.Peek();
             return$"      br {label}\n";            
         }
            //No tiene hijos
@@ -457,7 +467,7 @@ namespace Leviathan {
 
             var label1 = GenerateLabel();
             var label2 = GenerateLabel();
-            pila.push(label1);
+            pila.Push(label1);
             //
             lb.Append($"     block {label1}\n");
 
@@ -470,7 +480,7 @@ namespace Leviathan {
             lb.Append($"     end\n"); //loop
             lb.Append($"     end\n"); //block
             //antes de hacer el return hacer un pop del label1 = pila.pop
-            pila.pop(label1);
+            pila.Pop();
             //var result = sb.ToString();
             return lb.ToString();
         }
@@ -479,7 +489,7 @@ namespace Leviathan {
             StringBuilder lb = new StringBuilder();
             var label1 = GenerateLabel();            
             var label2 = GenerateLabel();
-            pila.push(label1);
+            pila.Push(label1);
             lb.Append($"     block {label1}\n"); //do
             lb.Append($"     loop {label2}\n"); //loop
             lb.Append(Visit((dynamic) node[0], fName));
@@ -489,7 +499,7 @@ namespace Leviathan {
             //sb.Append($"     br {label2}\n");
             lb.Append($"     end\n"); //loop
             lb.Append($"     end\n"); //block 
-            pila.pop(label1);
+            pila.Pop();
             return lb.ToString();
         }
 
@@ -497,7 +507,7 @@ namespace Leviathan {
             StringBuilder lb = new StringBuilder();
             // evaluate condition
             lb.Append(Visit((dynamic) node[0], fName));
-            lb.Append(sb.Append($"     if\n"));
+            lb.Append($"     if\n");
             
             // execute stmtlist
             lb.Append(Visit((dynamic) node[1], fName));
@@ -527,8 +537,9 @@ namespace Leviathan {
                 }
             }
             
-            sb.Append($"     end         \n");          
-            sb.Append($"     i32.const 0 \n");          
+            lb.Append($"     end         \n");          
+            lb.Append($"     i32.const 0 \n");   
+            return lb.ToString();
         }
 
         public StringBuilder Visit(ElseIfList node, string fName, StringBuilder lb){ // sons : elif*
@@ -549,12 +560,10 @@ namespace Leviathan {
         public string Visit(Elif node, string fName){
             StringBuilder lb = new StringBuilder();
             // evaluate condition
-            lb.Append(Visit(node[0], fName));
-
+            lb.Append(Visit((dynamic)node[0], fName));
             lb.Append($"        if\n");
-
             // execute statement        
-            lb.Append(Visit(node[1], fName));
+            lb.Append(Visit((dynamic)node[1], fName));
 
             lb.Append($"        end\n");
             lb.Append($"     i32.const 0 \n");   
