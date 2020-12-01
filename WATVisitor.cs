@@ -120,7 +120,9 @@ namespace Leviathan {
         
         
         public string Visit(DefList node) {
+            
             return VisitChildren((dynamic) node); // sons : (FunDef | VarDef)*
+
         }
         
         public string Visit(VarDef node){ // GLOBAL
@@ -129,6 +131,7 @@ namespace Leviathan {
         }
 
         public string Visit(FunDef node) { // sons : ParamList, var-def-list, stmt-list
+            sb.Clear(); // clear the global buffer 
             var funName = node.AnchorToken.Lexeme;
             funCallName = funName;
             parentNode = (dynamic) node;
@@ -195,7 +198,7 @@ namespace Leviathan {
 
         public string Visit(Identifier node, string fName){ // I have no sons! =)
            var varName = node.AnchorToken.Lexeme;
-           return $"     (local.get ${varName})\n";
+           return $"     local.get ${varName} \n";
             
         }
         //
@@ -213,12 +216,12 @@ namespace Leviathan {
             if(gVar.Contains(varName)){ // variable global
                 //lb.Append($"     (global.set \n");
                 lb.Append(Visit((dynamic) node[0], fName)); 
-                lb.Append("      global.set");
+                lb.Append($"      global.set ${varName} \n");
                 //lb.Append($"    )\n");
             } else {                    // variable local
                 //lb.Append($"     (local.set \n");
                 lb.Append(Visit((dynamic) node[0], fName)); 
-                lb.Append("      local.set\n");
+                lb.Append($"      local.set ${varName}\n");
                 //lb.Append($"    )\n");
             }
             return lb.ToString();
@@ -233,8 +236,37 @@ namespace Leviathan {
         public string Visit(Char_Literal node, string fName){ 
             string catchVal = node.AnchorToken.Lexeme;
             
-            var literal = AsCodePoints(catchVal.ToString());
-            return $"     i32.const {literal}";
+            if(catchVal[1] != '\\' ) {
+                var literal = AsCodePoints(catchVal);
+                return $"     i32.const {literal[1]} \n";
+            }else
+            {
+                switch(catchVal[2]){
+                    case 'n':
+                        return $"     i32.const 10 \n";
+                    case 'r':
+                        return $"     i32.const 13 \n";
+                    case 't':
+                        return $"     i32.const 9\n";
+                    case '\\':
+                        return $"     i32.const 92 \n";
+                    case '\'':
+                        return $"     i32.const 39 \n";
+                    case '\"':
+                        return $"     i32.const 34 \n";
+                    case 'u':
+                        string hex = catchVal.Substring(3, 6);
+                        //Console.WriteLine(hex);
+                        int val = Convert.ToInt32(hex, 16);
+                        //int val = Int32.Parse(hex);
+                        return $"     i32.const {val} \n";
+                    default:
+                        Console.WriteLine("Default case");
+                        return " ";
+                }
+            }
+            //return "";
+            
         }
 
         // arrays and string literals are stored in handles (a js array)
@@ -256,24 +288,91 @@ namespace Leviathan {
             lb.Append($"      i32.const 0 \n ");
             lb.Append($"      call $new \n");
             lb.Append($"      local.set {t}\n "); // TODO: resetear la secuencia de las variables locales
-
+            
             // for each children node of expr-list
-            foreach(var code in codes){
-
-                // retrieve the temporal handle 
+            for(int i = 1; i <= catchVal.Length - 2 ; i++)
+            {
+                 // retrieve the temporal handle 
                 lb.Append($"     local.get {t} \n");
+                if(catchVal[i] != '\\' ) {
+                     //IList<int> codes = AsCodePoints(catchVal[i]);
+                     var code= codes[i];
+                     
+                        //var literal = AsCodePoints(catchVal[i].ToString());     
+                        // retrieve the element to be added to the array
+                        lb.Append($"     i32.const {code} \n");
+                        lb.Append($"      call $add \n");
+                        lb.Append("      drop \n");    
+                      
+                }
+                else
+                {
+                    switch(catchVal[i+1]){
+                        case 'n':
+                            lb.Append($"     i32.const 10 \n");
+                            lb.Append($"      call $add \n");
+                            lb.Append("      drop \n");
+                            i++;
+                            break;
+                        
+                        case 'r':
+                            lb.Append($"    i32.const 13 \n");
+                            lb.Append($"      call $add \n");
+                            lb.Append("      drop \n");
+                            i++;
+                            break;
+                        case 't':
+                            lb.Append($"     i32.const 9\n");
+                            lb.Append($"      call $add \n");
+                            lb.Append("      drop \n");
+                            i++;
+                            break;
+                        case '\\':
+                            lb.Append($"     i32.const 92 \n");
+                            lb.Append($"      call $add \n");
+                            lb.Append("      drop \n");
+                            i++;
+                            break;
+                        case '\'':
+                            lb.Append($"     i32.const 39 \n");
+                            lb.Append($"      call $add \n");
+                            lb.Append("      drop \n");
+                            i++;
+                            break;
+                        case '\"':
+                            lb.Append($"     i32.const 34 \n");
+                            lb.Append($"      call $add \n");
+                            lb.Append("      drop \n");
+                            i++;
+                            break;
+                        case 'u':
+                            string hex = catchVal.Substring(i+2, 6);
+                            //Console.WriteLine(hex);
+                            int val = Convert.ToInt32(hex, 16);
+                            i = i + 7;
+                            lb.Append($"     i32.const {val} \n");
+                            lb.Append($"      call $add \n");
+                            lb.Append("      drop \n");
+                            break;
+                        default:
+                            Console.WriteLine("Default case");
+                            break;
+                        }
+                }
 
+
+
+            }
                 // retrieve the element to be added to the array
-                lb.Append($"      i32.const {code}\n");
+                //lb.Append($"      i32.const {n}\n");
 
                 // call the add function of the leviathanAPI
                 // so that it can be added to the array object
-                lb.Append($"      call $add \n");
+            //lb.Append($"      call $add \n");
 
-                // drop the last element in the stack
-                lb.Append("      drop \n");
-
-            }
+            // drop the last element in the stack
+            
+            lb.Append($"     local.get {t} \n");
             // return local string builder
             return lb.ToString();
         }
@@ -309,7 +408,7 @@ namespace Leviathan {
             // with the new temporal variable
             lb.Append($"      i32.const 0 \n ");
             lb.Append($"      call $new \n");
-            lb.Append($"      local.set {t} "); // TODO: resetear la secuencia de las variables locales
+            lb.Append($"      local.set {t} \n"); // TODO: resetear la secuencia de las variables locales
 
             // for each children node of expr-list
             foreach(var n in node[0]){
@@ -328,6 +427,7 @@ namespace Leviathan {
                 lb.Append("      drop \n");
 
             }
+            lb.Append($"     local.get {t} \n");
             // return local string builder
             return lb.ToString();
         }
@@ -357,7 +457,7 @@ namespace Leviathan {
         }
         public string Visit (Div node, string fName){
             return VisitChildren( node, fName)
-            +"      i32.div\n";
+            +"      i32.div_s\n";
         }
         public string Visit (Mod node, string fName){
             return VisitChildren( node, fName)
@@ -469,8 +569,8 @@ namespace Leviathan {
             var label2 = GenerateLabel();
             pila.Push(label1);
             //
-            lb.Append($"     block {label1}\n");
 
+            lb.Append($"     block {label1}\n");
             lb.Append($"     loop {label2}\n");
             lb.Append(Visit((dynamic) node[0], fName));
             lb.Append($"     i32.eqz\n");
@@ -503,7 +603,9 @@ namespace Leviathan {
             return lb.ToString();
         }
 
-        public string Visit(StmtIf node, string fName){// a llorar con el profe DUDA
+
+        /*
+        public string Visit(StmtIf node, string fName){
             StringBuilder lb = new StringBuilder();
             // evaluate condition
             lb.Append(Visit((dynamic) node[0], fName));
@@ -512,40 +614,59 @@ namespace Leviathan {
             // execute stmtlist
             lb.Append(Visit((dynamic) node[1], fName));
             
-            //sb.Append("     else");
-            
-            // else if list returns true if an else has been appended, false otherwise
-            lb = Visit((dynamic) node[2], fName, lb); 
-            
             // determine if StmtIf has an else son 
-            /*
+            bool hasElse = false;
             if(childrenCounter(node)>3){
-                if(elseExists){
-                    Visit((dynamic) node[3], fName);   // else
-                } else {
-                    sb.Append("     else");
-                    Visit((dynamic) node[3], fName);  // else
-                }
-            }*/
+                hasElse = true;
+            }
+
+            // elseiflist is appended here
+            lb = Visit((dynamic) node[2], fName, lb, hasElse); 
+
             
-            if(childrenCounter(node)>3){
-                if(Visit((dynamic) node[2], fName)){
+            
+            // add the last else statement if there is one
+            if(hasElse){
+                if(Visit((dynamic) node[2], fName)){ // determine if there is 
+                                                     // an elseiflist
                     lb.Append(Visit((dynamic) node[3], fName));   // else
                 } else {
-                    lb.Append("     else");
+                    lb.Append("     else\n");
                     lb.Append(Visit((dynamic) node[3], fName));  // else
                 }
+                //lb.Append("     end");
+                // close all
+                for(int i=0; i<childrenCounter(node[2]); i++){
+                        lb.Append("     end");
+                }
+            } else{
+                // close all
+                //for(int i=0; i<childrenCounter(node[2])-1; i++){
+                //        lb.Append("     end");
+                //}
             }
-            
             lb.Append($"     end         \n");          
-            lb.Append($"     i32.const 0 \n");   
             return lb.ToString();
         }
 
-        public StringBuilder Visit(ElseIfList node, string fName, StringBuilder lb){ // sons : elif*
+        public StringBuilder Visit(ElseIfList node, string fName, StringBuilder lb, bool hasElse){ // sons : elif*
             if(childrenCounter(node)>0){
-                lb.Append($"    else");                
-                lb.Append(VisitChildren(node, fName)); // add multiple if statements nested in the else "elifs"*
+                lb.Append($"     else\n");    // outer else           
+                int nidIfCtr = childrenCounter(node);
+                for(int i=0; i<nidIfCtr; i++){
+                    lb.Append(VisitChildren(node, fName)); // add multiple if statements nested in the else "elifs"*    
+                    if(i==nidIfCtr-1 && hasElse == false){ // last
+                        lb.Append("         end");
+                    } else {
+                        lb.Append("         else");
+                    }
+                }
+                
+
+                //for(int i=0; i<nidIfCtr-1; i++){
+                //    lb.Append("     end");
+                //}
+                
             }
             return lb;
         }
@@ -564,10 +685,7 @@ namespace Leviathan {
             lb.Append($"        if\n");
             // execute statement        
             lb.Append(Visit((dynamic)node[1], fName));
-
-            lb.Append($"        end\n");
-            lb.Append($"     i32.const 0 \n");   
-
+            //lb.Append($"        end\n");
             return lb.ToString();
         }
 
@@ -576,7 +694,7 @@ namespace Leviathan {
         public string Visit(Else node, string fName){
             return VisitChildren(node, fName);         
         }
-
+        */
         public string Visit(ExprOr node, string fName){
             return VisitChildren( node, fName) 
             + $"     i32.or \n";
