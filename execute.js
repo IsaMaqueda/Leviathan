@@ -34,7 +34,7 @@ async function main() {
     const buffer = fs.readFileSync(fileName);
     const module = await WebAssembly.compile(buffer);
     const instance = await WebAssembly.instantiate(module, levilib);
-    instance.exports.start();
+    instance.exports.main();
   } catch (error) {
     console.log(error.message);
   }

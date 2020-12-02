@@ -23,6 +23,7 @@ all: leviathan.exe node_modules
 node_modules:
 	npm init -y
 	npm install wabt --save
+	npm install readline-sync --save
 
 leviathan.exe: Driver.cs Scanner.cs Token.cs TokenCategory.cs \
 	Parser.cs SyntaxError.cs Node.cs SpecificNodes.cs \
@@ -39,4 +40,5 @@ clean:
 	rm leviathan.exe
 	rm -f package.json package-lock.json
 	rm -rf node_modules
-	rm -f 001_hello.wat 001_hello.wasm 002_binary.wat 002_binary.wasm
+	rm -f *.wat 
+	rm -f *.wasm

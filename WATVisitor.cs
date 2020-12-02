@@ -30,10 +30,8 @@ namespace Leviathan {
 
         // controller variables
         public int inLoop = 0;
-        string funCallName;
         string idFather = "";
-        int ifFlag = 0;
-        Node parentNode;
+
 
         //variable pila para el while y do while
         Stack pila = new Stack();
@@ -133,8 +131,6 @@ namespace Leviathan {
         public string Visit(FunDef node) { // sons : ParamList, var-def-list, stmt-list
             sb.Clear(); // clear the global buffer 
             var funName = node.AnchorToken.Lexeme;
-            funCallName = funName;
-            parentNode = (dynamic) node;
             StringBuilder lb = new StringBuilder();
             if(funName=="main"){
                 sb.Append($"    (func (export \"{funName}\")\n" );
@@ -198,7 +194,12 @@ namespace Leviathan {
 
         public string Visit(Identifier node, string fName){ // I have no sons! =)
            var varName = node.AnchorToken.Lexeme;
-           return $"     local.get ${varName} \n";
+           if(gVar.Contains(varName)){
+            return $"       global.get ${varName} \n";
+           } else {
+            return $"       local.get ${varName} \n";
+           }
+           
             
         }
         //
@@ -207,7 +208,6 @@ namespace Leviathan {
         }
 
         public string Visit(StmtAssign node, string fName){ // sons: (+ - !) (* / %) (true false) (identifier, fun-call, array, lit) 
-            parentNode = (dynamic)node;
             var varName = node.AnchorToken.Lexeme;
             // definir si una es una variable local o global
             
@@ -216,12 +216,12 @@ namespace Leviathan {
             if(gVar.Contains(varName)){ // variable global
                 //lb.Append($"     (global.set \n");
                 lb.Append(Visit((dynamic) node[0], fName)); 
-                lb.Append($"      global.set ${varName} \n");
+                lb.Append($"       global.set ${varName} \n");
                 //lb.Append($"    )\n");
             } else {                    // variable local
                 //lb.Append($"     (local.set \n");
                 lb.Append(Visit((dynamic) node[0], fName)); 
-                lb.Append($"      local.set ${varName}\n");
+                lb.Append($"       local.set ${varName}\n");
                 //lb.Append($"    )\n");
             }
             return lb.ToString();
@@ -230,7 +230,7 @@ namespace Leviathan {
         // LITS
         public string Visit(Int_Literal node, string fName){ 
             var catchVal = node.AnchorToken.Lexeme;
-            return $"     i32.const {catchVal}\n";
+            return $"       i32.const {catchVal}\n";
         }
 
         public string Visit(Char_Literal node, string fName){ 
@@ -238,28 +238,28 @@ namespace Leviathan {
             
             if(catchVal[1] != '\\' ) {
                 var literal = AsCodePoints(catchVal);
-                return $"     i32.const {literal[1]} \n";
+                return $"       i32.const {literal[1]} \n";
             }else
             {
                 switch(catchVal[2]){
                     case 'n':
-                        return $"     i32.const 10 \n";
+                        return $"       i32.const 10 \n";
                     case 'r':
-                        return $"     i32.const 13 \n";
+                        return $"       i32.const 13 \n";
                     case 't':
-                        return $"     i32.const 9\n";
+                        return $"       i32.const 9\n";
                     case '\\':
-                        return $"     i32.const 92 \n";
+                        return $"       i32.const 92 \n";
                     case '\'':
-                        return $"     i32.const 39 \n";
+                        return $"       i32.const 39 \n";
                     case '\"':
-                        return $"     i32.const 34 \n";
+                        return $"       i32.const 34 \n";
                     case 'u':
                         string hex = catchVal.Substring(3, 6);
                         //Console.WriteLine(hex);
                         int val = Convert.ToInt32(hex, 16);
                         //int val = Int32.Parse(hex);
-                        return $"     i32.const {val} \n";
+                        return $"       i32.const {val} \n";
                     default:
                         Console.WriteLine("Default case");
                         return " ";
@@ -285,9 +285,9 @@ namespace Leviathan {
     
             // append to the local sb the new handle,
             // with the new temporal variable
-            lb.Append($"      i32.const 0 \n ");
-            lb.Append($"      call $new \n");
-            lb.Append($"      local.set {t}\n "); // TODO: resetear la secuencia de las variables locales
+            lb.Append($"       i32.const 0 \n ");
+            lb.Append($"       call $new \n");
+            lb.Append($"       local.set {t}\n "); // TODO: resetear la secuencia de las variables locales
             
             // for each children node of expr-list
             for(int i = 1; i <= catchVal.Length - 2 ; i++)
@@ -300,49 +300,49 @@ namespace Leviathan {
                      
                         //var literal = AsCodePoints(catchVal[i].ToString());     
                         // retrieve the element to be added to the array
-                        lb.Append($"     i32.const {code} \n");
-                        lb.Append($"      call $add \n");
-                        lb.Append("      drop \n");    
+                        lb.Append($"       i32.const {code} \n");
+                        lb.Append($"       call $add \n");
+                        lb.Append("       drop \n");    
                       
                 }
                 else
                 {
                     switch(catchVal[i+1]){
                         case 'n':
-                            lb.Append($"     i32.const 10 \n");
-                            lb.Append($"      call $add \n");
-                            lb.Append("      drop \n");
+                            lb.Append($"       i32.const 10 \n");
+                            lb.Append($"       call $add \n");
+                            lb.Append("       drop \n");
                             i++;
                             break;
                         
                         case 'r':
-                            lb.Append($"    i32.const 13 \n");
+                            lb.Append($"      i32.const 13 \n");
                             lb.Append($"      call $add \n");
                             lb.Append("      drop \n");
                             i++;
                             break;
                         case 't':
-                            lb.Append($"     i32.const 9\n");
-                            lb.Append($"      call $add \n");
-                            lb.Append("      drop \n");
+                            lb.Append($"       i32.const 9\n");
+                            lb.Append($"       call $add \n");
+                            lb.Append("       drop \n");
                             i++;
                             break;
                         case '\\':
-                            lb.Append($"     i32.const 92 \n");
-                            lb.Append($"      call $add \n");
-                            lb.Append("      drop \n");
+                            lb.Append($"       i32.const 92 \n");
+                            lb.Append($"       call $add \n");
+                            lb.Append("       drop \n");
                             i++;
                             break;
                         case '\'':
-                            lb.Append($"     i32.const 39 \n");
-                            lb.Append($"      call $add \n");
-                            lb.Append("      drop \n");
+                            lb.Append($"       i32.const 39 \n");
+                            lb.Append($"       call $add \n");
+                            lb.Append("       drop \n");
                             i++;
                             break;
                         case '\"':
-                            lb.Append($"     i32.const 34 \n");
-                            lb.Append($"      call $add \n");
-                            lb.Append("      drop \n");
+                            lb.Append($"       i32.const 34 \n");
+                            lb.Append($"       call $add \n");
+                            lb.Append("       drop \n");
                             i++;
                             break;
                         case 'u':
@@ -350,9 +350,9 @@ namespace Leviathan {
                             //Console.WriteLine(hex);
                             int val = Convert.ToInt32(hex, 16);
                             i = i + 7;
-                            lb.Append($"     i32.const {val} \n");
-                            lb.Append($"      call $add \n");
-                            lb.Append("      drop \n");
+                            lb.Append($"       i32.const {val} \n");
+                            lb.Append($"       call $add \n");
+                            lb.Append("       drop \n");
                             break;
                         default:
                             Console.WriteLine("Default case");
@@ -372,7 +372,7 @@ namespace Leviathan {
 
             // drop the last element in the stack
             
-            lb.Append($"     local.get {t} \n");
+            lb.Append($"       local.get {t} \n");
             // return local string builder
             return lb.ToString();
         }
@@ -380,17 +380,17 @@ namespace Leviathan {
         // TRUE && FALSE
         public string Visit(True node, string fName){
             // I HAVE NO KIDS! =)        
-              return "    i32.const 1\n"; 
+              return "       i32.const 1\n"; 
         }
 
         public string Visit(False node, string fName){
             // I HAVE NO KIDS! =)
-             return "    i32.const 0\n";
+             return "       i32.const 0\n";
         }
 
         public string Visit(UnEqual node, string fName){
             return VisitChildren(node, fName)
-             + "      i32.ne\n";
+             + "       i32.ne\n";
             
         }
         
@@ -406,108 +406,120 @@ namespace Leviathan {
             
             // append to the local sb the new handle,
             // with the new temporal variable
-            lb.Append($"      i32.const 0 \n ");
-            lb.Append($"      call $new \n");
-            lb.Append($"      local.set {t} \n"); // TODO: resetear la secuencia de las variables locales
+            lb.Append($"       i32.const 0 \n ");
+            lb.Append($"       call $new \n");
+            lb.Append($"       local.set {t} \n"); // TODO: resetear la secuencia de las variables locales
 
             // for each children node of expr-list
             foreach(var n in node[0]){
 
                 // retrieve the temporal handle 
-                lb.Append($"     local.get {t} \n");
+                lb.Append($"       local.get {t} \n");
 
                 // retrieve the element to be added to the array
                 lb.Append(Visit((dynamic) n, fName));
 
                 // call the add function of the leviathanAPI
                 // so that it can be added to the array object
-                lb.Append($"      call $add \n");
+                lb.Append($"       call $add \n");
 
                 // drop the last element in the stack
-                lb.Append("      drop \n");
+                lb.Append("       drop \n");
 
             }
-            lb.Append($"     local.get {t} \n");
+            lb.Append($"       local.get {t} \n");
             // return local string builder
             return lb.ToString();
         }
         
          // OpAdd
         public string Visit(Neg node, string fName){
-            //sb.Append("      i32.const 0\n"); // duda
-            
-            return VisitChildren(node, fName)
-            + "      i32.sub\n";
+
+            if(childrenCounter(node)>1){// substraction
+                return VisitChildren(node, fName)
+                + "       i32.sub\n";
+            } else { // unary operator
+
+                return " i32.const 0 \n" 
+                + VisitChildren(node, fName)
+                + "       i32.sub\n";
+            }
         }
 
         public string Visit(Plus node, string fName){
-            return VisitChildren( node, fName)
-            + "      i32.add\n";
+            if(childrenCounter(node)>1){// addition
+                return VisitChildren(node, fName)
+                + "       i32.add\n";
+            } else { // unary operator
+                return " i32.const 0 \n" 
+                + VisitChildren(node, fName)
+                + "       i32.add\n";
+            //+ "       i32.sub\n";
+            }
         }
 
         public string Visit(Not node, string fName){ // !
             return VisitChildren( node, fName)
-            + "      i32.eqz\n";
+            + "       i32.eqz\n";
         }
 
         // OpMul
         public string Visit (Mul node, string fName){
             return VisitChildren( node, fName)
-            +"      i32.mul\n";
+            +"       i32.mul\n";
         }
         public string Visit (Div node, string fName){
             return VisitChildren( node, fName)
-            +"      i32.div_s\n";
+            +"       i32.div_s\n";
         }
         public string Visit (Mod node, string fName){
             return VisitChildren( node, fName)
-            +"      i32.rem_s\n";
+            +"       i32.rem_s\n";
         }
         
         // OpRel
         // compare operators
         public string Visit(Less node, string fName){
             return VisitChildren( node , fName)
-            + "      i32.lt_s\n";
+            + "       i32.lt_s\n";
         }
 
         public string Visit(Less_Equal node, string fName){
             return VisitChildren( node, fName)
-            +"      i32.le_s\n";
+            +"       i32.le_s\n";
         }
 
         public string Visit(More node, string fName){
             return VisitChildren( node, fName)
-            +"      i32.gt_s\n";
+            +"       i32.gt_s\n";
         }
 
         public string Visit(More_Equal node, string fName){
             return VisitChildren( node, fName)
-            + "      i32.ge_s\n";
+            + "       i32.ge_s\n";
         }
 
         public string Visit(Equal node, string fName){
             return VisitChildren(node, fName) 
-            + "      i32.eq\n";
+            + "       i32.eq\n";
         }
 
         // OpUnary
         public string Visit (StmtFunCall node, string fName){ //sons:  exprlist
             string funName = node.AnchorToken.Lexeme;
-            funCallName = funName;
-            parentNode = (dynamic)node;
             
             return VisitChildren(node, fName) // puts args before function call
-            + $"      call ${funName}\n"
-            +"      drop \n";
+            + $"       call ${funName}\n"
+            + "       drop \n";
+            //es necesario este drop?
+            
         }
 
         
         public string Visit (FunCall node, string fName){ //sons:  exprlist
             string funName = node.AnchorToken.Lexeme;
-            funCallName = (dynamic)funName;
             return VisitChildren(node, fName) // puts args before function call
-            +$"      call ${funName}\n";
+            +$"       call ${funName}\n";
         }
 
         public string Visit (StmtIncr node, string fName){
@@ -515,13 +527,15 @@ namespace Leviathan {
             StringBuilder lb = new StringBuilder();
 
             if(gVar.Contains(varName)){
-                lb.Append($"     global.get ${varName} \n");
-                lb.Append($"     i32.const 1 \n");
-                lb.Append($"     i32.add \n");
+                lb.Append($"       global.get ${varName} \n");
+                lb.Append($"       i32.const 1 \n");
+                lb.Append($"       i32.add \n");
+                lb.Append($"       global.set ${varName} \n");
             } else {
-                lb.Append($"     local.get ${varName} \n");
-                lb.Append($"     i32.const 1 \n");
-                lb.Append($"     i32.add \n");
+                lb.Append($"       local.get ${varName} \n");
+                lb.Append($"       i32.const 1 \n");
+                lb.Append($"       i32.add \n");
+                lb.Append($"       local.set ${varName} \n");
             }
 
             return lb.ToString();
@@ -532,13 +546,15 @@ namespace Leviathan {
             StringBuilder lb = new StringBuilder();
 
             if(gVar.Contains(varName)){
-                lb.Append($"     global.get ${varName} \n");
-                lb.Append($"     i32.const 1 \n");
-                lb.Append($"     i32.sub \n");
+                lb.Append($"       global.get ${varName} \n");
+                lb.Append($"       i32.const 1 \n");
+                lb.Append($"       i32.sub \n");
+                lb.Append($"       global.set ${varName} \n");
             } else {
-                lb.Append($"     local.get ${varName} \n");
-                lb.Append($"     i32.const 1 \n");
-                lb.Append($"     i32.sub \n");
+                lb.Append($"       local.get ${varName} \n");
+                lb.Append($"       i32.const 1 \n");
+                lb.Append($"       i32.sub \n");
+                lb.Append($"       local.set ${varName} \n");
             }
             return lb.ToString();
             
@@ -549,12 +565,12 @@ namespace Leviathan {
             //Console.WriteLine(inLoop);
             //hacer un pick de la pila
             var label = pila.Peek();
-            return$"      br {label}\n";            
+            return$"       br {label}\n";            
         }
            //No tiene hijos
         public string Visit (StmtReturn node, string fName){ //sons:  maybe
             return Visit((dynamic) node[0], fName)
-            + $"     return\n";
+            + $"       return\n";
         }
         public string  Visit (StmtEmpty node, string fName){ //sons:  
            //DON'T DO ANYTHING
@@ -570,15 +586,15 @@ namespace Leviathan {
             pila.Push(label1);
             //
 
-            lb.Append($"     block {label1}\n");
-            lb.Append($"     loop {label2}\n");
+            lb.Append($"       block {label1}\n");
+            lb.Append($"       loop {label2}\n");
             lb.Append(Visit((dynamic) node[0], fName));
-            lb.Append($"     i32.eqz\n");
-            lb.Append($"     br_if {label1}\n");
+            lb.Append($"       i32.eqz\n");
+            lb.Append($"       br_if {label1}\n");
             lb.Append(Visit((dynamic) node[1], fName));
-            lb.Append($"     br {label2}\n");
-            lb.Append($"     end\n"); //loop
-            lb.Append($"     end\n"); //block
+            lb.Append($"       br {label2}\n");
+            lb.Append($"       end\n"); //loop
+            lb.Append($"       end\n"); //block
             //antes de hacer el return hacer un pop del label1 = pila.pop
             pila.Pop();
             //var result = sb.ToString();
@@ -590,26 +606,26 @@ namespace Leviathan {
             var label1 = GenerateLabel();            
             var label2 = GenerateLabel();
             pila.Push(label1);
-            lb.Append($"     block {label1}\n"); //do
-            lb.Append($"     loop {label2}\n"); //loop
+            lb.Append($"       block {label1}\n"); //do
+            lb.Append($"       loop {label2}\n"); //loop
             lb.Append(Visit((dynamic) node[0], fName));
             lb.Append(Visit((dynamic) node[1], fName));
             //sb.Append($"     i32.eqz \n");
-            lb.Append($"     br_if {label2}\n"); //este era label1
+            lb.Append($"       br_if {label2}\n"); //este era label1
             //sb.Append($"     br {label2}\n");
-            lb.Append($"     end\n"); //loop
-            lb.Append($"     end\n"); //block 
+            lb.Append($"       end\n"); //loop
+            lb.Append($"       end\n"); //block 
             pila.Pop();
             return lb.ToString();
         }
 
 
-        /*
+        
         public string Visit(StmtIf node, string fName){
             StringBuilder lb = new StringBuilder();
             // evaluate condition
             lb.Append(Visit((dynamic) node[0], fName));
-            lb.Append($"     if\n");
+            lb.Append($"       if\n");
             
             // execute stmtlist
             lb.Append(Visit((dynamic) node[1], fName));
@@ -623,50 +639,48 @@ namespace Leviathan {
             // elseiflist is appended here
             lb = Visit((dynamic) node[2], fName, lb, hasElse); 
 
-            
-            
             // add the last else statement if there is one
             if(hasElse){
+
                 if(Visit((dynamic) node[2], fName)){ // determine if there is 
                                                      // an elseiflist
                     lb.Append(Visit((dynamic) node[3], fName));   // else
+                    // close all ifs
+                    for(int i=0; i<childrenCounter(node[2]); i++){
+                        lb.Append("       end\n");
+                    }
                 } else {
-                    lb.Append("     else\n");
+                    lb.Append("       else\n");
                     lb.Append(Visit((dynamic) node[3], fName));  // else
-                }
-                //lb.Append("     end");
-                // close all
-                for(int i=0; i<childrenCounter(node[2]); i++){
-                        lb.Append("     end");
-                }
-            } else{
-                // close all
-                //for(int i=0; i<childrenCounter(node[2])-1; i++){
-                //        lb.Append("     end");
-                //}
-            }
-            lb.Append($"     end         \n");          
-            return lb.ToString();
-        }
-
-        public StringBuilder Visit(ElseIfList node, string fName, StringBuilder lb, bool hasElse){ // sons : elif*
-            if(childrenCounter(node)>0){
-                lb.Append($"     else\n");    // outer else           
-                int nidIfCtr = childrenCounter(node);
-                for(int i=0; i<nidIfCtr; i++){
-                    lb.Append(VisitChildren(node, fName)); // add multiple if statements nested in the else "elifs"*    
-                    if(i==nidIfCtr-1 && hasElse == false){ // last
-                        lb.Append("         end");
-                    } else {
-                        lb.Append("         else");
+                }      
+            } else {
+                if(childrenCounter(node[2])>0){
+                    for(int i=0; i<childrenCounter(node[2])-1; i++){
+                        lb.Append("       end\n");
                     }
                 }
-                
-
-                //for(int i=0; i<nidIfCtr-1; i++){
-                //    lb.Append("     end");
-                //}
-                
+            }
+            lb.Append($"       end         \n");          
+            return lb.ToString();
+        }
+        
+        public StringBuilder Visit(ElseIfList node, string fName, StringBuilder lb, bool hasElse){ // sons : elif*
+            if(childrenCounter(node)>0){
+                lb.Append($"       else\n");    // outer else           
+                int nidIfCtr = childrenCounter(node);
+                for(int i=0; i<nidIfCtr; i++){
+                    lb.Append(Visit((dynamic)node[i], fName)); // add multiple if statement    
+                    if(i!=nidIfCtr-1){
+                        lb.Append("       else\n");
+                    } else {
+                        if(hasElse){
+                            lb.Append("       else\n");
+                        } else {
+                            lb.Append("       end\n");
+                        }
+                    }            
+                    
+                }  
             }
             return lb;
         }
@@ -694,15 +708,15 @@ namespace Leviathan {
         public string Visit(Else node, string fName){
             return VisitChildren(node, fName);         
         }
-        */
+        
         public string Visit(ExprOr node, string fName){
             return VisitChildren( node, fName) 
-            + $"     i32.or \n";
+            + $"       i32.or \n";
         }
 
         public string  Visit(ExprAnd node, string fName){
             return VisitChildren( node, fName) 
-            + $"     i32.and \n";
+            + $"       i32.and \n";
         }
 
 
