@@ -1,5 +1,5 @@
 /*
-    Levithan Compiler - Lexical Analisys
+    Levithan Compiler - Semantic Analysis
 
     Camila Rovirosa A01024192
     Eduardo Badillo A01020716
@@ -28,7 +28,16 @@ using System.Text;
 
 namespace Leviathan {
     public class Driver {
-        const string VERSION = "0.01";
+        const string VERSION = "0.4";
+
+        //-----------------------------------------------------------
+        static readonly string[] ReleaseIncludes = {
+            "Lexical analysis",
+            "Syntactic analysis",
+            "AST construction",
+            "Semantic Analysis",
+            "WAT code generation"
+        };
 
          void PrintAppHeader() {
              Console.WriteLine("Leviathan compiler, version " + VERSION);
@@ -37,14 +46,22 @@ namespace Leviathan {
             Console.WriteLine("the GNU General Public License version 3 or "
                 + "later.");
             Console.WriteLine("This program has absolutely no warranty.");
-            Console.WriteLine("Hola, esto solo es una prueba");
          }
+
+         void PrintReleaseIncludes() {
+            Console.WriteLine("Included in this release:");
+            foreach (var phase in ReleaseIncludes) {
+                Console.WriteLine("   * " + phase);
+            }
+        }
         void Run (string[] args){
             PrintAppHeader();
             Console.WriteLine();
+            PrintReleaseIncludes();
+            Console.WriteLine();
             
             // Input file
-            if (args.Length != 1) {
+            if (args.Length != 2) {
                 Console.Error.WriteLine(
                     "Please specify the name of the input file.");
                 Environment.Exit(1);
@@ -52,20 +69,70 @@ namespace Leviathan {
 
             try {
                 var inputPath = args[0];
+                var outputPath = args[1];
                 var input = File.ReadAllText(inputPath);
+            
+                var parser = new Parser(new Scanner(input).Start().GetEnumerator());
+                var program = parser.Program();
+                Console.WriteLine("Syntax OK.");
+                //Console.Write(program.ToStringTree());
 
-                Console.WriteLine(String.Format(
-                    "===== Tokens from: \"{0}\" =====", inputPath)
-                );
-                var count = 1;
-                foreach (var tok in new Scanner(input).Start()) {
-                    Console.WriteLine(String.Format("[{0}] {1}",
-                                                    count++, tok)
-                    );
+                var semantic = new SemanticVisitor();
+                Globales globales = Globales.getInstance();
+
+                semantic.Visit((dynamic) program);
+
+                Console.WriteLine("Semantics OK.");
+                /*Console.WriteLine();
+                Console.WriteLine("Function Table");
+                Console.WriteLine("============");
+                foreach (var entry in globales.getGlobalFunctions()) {
+                    Console.WriteLine(entry);
                 }
-            } catch (FileNotFoundException f){
-                Console.Error.WriteLine(f.Message);
-                Environment.Exit(1);
+                Console.WriteLine();
+
+                Console.WriteLine("Global Variables");
+                Console.WriteLine("============");
+                foreach (var entry in globales.getGlobalVariables())
+                {
+                        Console.WriteLine(entry); 
+                }
+                Console.WriteLine();*/
+
+                var parser2 = new Parser(new Scanner(input).Start().GetEnumerator());
+                var program2 = parser2.Program();
+                var semantic2 = new SemanticVisitor2();
+                semantic2.Visit((dynamic) program2);
+
+                /*Console.WriteLine("Function Table with Variables");
+                Console.WriteLine("============");
+                foreach (var entry in globales.getGlobalFunctions()) {
+                    Console.WriteLine(entry);
+                }
+                Console.WriteLine();*/
+                
+                
+                // Read the global variable table and function table
+                var codeGenerator = new WATVisitor(globales.getGlobalFunctions(), globales.getGlobalVariables());
+                File.WriteAllText(
+                    outputPath,
+                    codeGenerator.Visit((dynamic) program2));
+                Console.WriteLine(
+                    "Created WAT (WebAssembly text format) file "
+                    + $"'{outputPath}'.");
+
+
+
+            } catch (Exception e) {
+
+                if (e is FileNotFoundException
+                    || e is SyntaxError
+                    || e is SemanticError) {
+                    Console.Error.WriteLine(e.Message);
+                    Environment.Exit(1);
+                }
+
+                throw;
             }
         }
 

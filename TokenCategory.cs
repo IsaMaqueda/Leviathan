@@ -1,5 +1,5 @@
 /*
-    Levithan Compiler - Lexical Analisys
+    Levithan Compiler - AST construction
 
     Camila Rovirosa A01024192
     Eduardo Badillo A01020716
@@ -20,6 +20,38 @@
 */
 namespace Leviathan {
     enum TokenCategory {
+        // plain identifier
+        IDENTIFIER,
+        // non keywords
+        AND,
+        EQUAL,
+        UNEQUAL,
+        ASSIGN, 
+        INT_LITERAL,
+        STRING_LITERAL,
+        CHAR_LITERAL,
+        LESS_EQUAL,
+        MORE_EQUAL,
+        MORE,
+        LESS,
+        MUL,
+        DIV,
+        MOD,
+        DECR,
+        NEG,
+        PARENTHESIS_OPEN,
+        PARENTHESIS_CLOSE,
+        BRACE_OPEN,
+        BRACE_CLOSE,
+        BRACKET_OPEN,
+        BRACKET_CLOSE,
+        INCR,
+        PLUS,
+        NOT,
+        OR,
+        SEMI_COLON,
+        COMMA,
+        // keywords 
         BREAK,
         DO,
         ELIF,
@@ -29,6 +61,9 @@ namespace Leviathan {
         RETURN,
         TRUE,
         VAR,
-        WHILE
+        WHILE, 
+        // OTHER
+        ILLEGAL_CHAR, 
+        EOF
     }
 }
